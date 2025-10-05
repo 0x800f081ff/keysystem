@@ -3,39 +3,429 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KeyAuth Test</title>
+  <title>Login</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%231e3c72;stop-opacity:1" /><stop offset="100%" style="stop-color:%232a5298;stop-opacity:1" /></linearGradient></defs><rect width="1920" height="1080" fill="url(%23grad)"/></svg>') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(52, 152, 219, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(52, 152, 219, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      font-size: 15px;
+      color: white;
+      transition: all 0.3s;
+    }
+
+    .form-group input::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    .form-group input:focus {
+      outline: none;
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-primary:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 14px;
+      padding: 12px;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .divider span {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 0 12px;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 12px;
+      position: relative;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .response-box {
+      margin-top: 20px;
+      padding: 14px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      border-left: 3px solid rgba(52, 152, 219, 0.8);
+      display: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .response-box.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .response-box pre {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Courier New', monospace;
+    }
+
+    .response-box.success {
+      border-left-color: rgba(46, 204, 113, 0.8);
+    }
+
+    .response-box.error {
+      border-left-color: rgba(231, 76, 60, 0.8);
+    }
+
+    .step-indicator {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .step-indicator .step {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 0 4px;
+      transition: all 0.3s;
+    }
+
+    .step-indicator .step.active {
+      background: rgba(255, 255, 255, 0.8);
+      width: 20px;
+      border-radius: 3px;
+    }
+
+    .info-box {
+      background: rgba(52, 152, 219, 0.15);
+      border: 1px solid rgba(52, 152, 219, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.5;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .link-text {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .link-text a {
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .link-text a:hover {
+      color: white;
+    }
+  </style>
 </head>
 <body>
-  <h1>KeyAuth Test Frontend</h1>
+  <div class="container">
+    <button class="close-btn" onclick="alert('Close functionality')">✕</button>
+    
+    <!-- Login View -->
+    <div id="loginView" class="view active">
+      <div class="header">
+        <h1>Login</h1>
+      </div>
 
-  <!-- REGISTER -->
-  <h2>Register</h2>
-  <input type="text" id="regUsername" placeholder="Username"><br><br>
-  <input type="password" id="regPassword" placeholder="Password"><br><br>
-  <input type="text" id="regEmail" placeholder="Email"><br><br>
-  <input type="text" id="regLicense" placeholder="License Key"><br><br>
-  <button onclick="registerUser()">Register</button>
-  <pre id="regResponse"></pre>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="loginUsername" placeholder="">
+      </div>
 
-  <hr>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="">
+      </div>
 
-  <!-- LOGIN -->
-  <h2>Login</h2>
-  <input type="text" id="loginUsername" placeholder="Username"><br><br>
-  <input type="password" id="loginPassword" placeholder="Password"><br><br>
-  <button onclick="loginUser()">Login</button>
-  <pre id="loginResponse"></pre>
+      <button class="btn btn-primary" onclick="loginUser()">Login</button>
 
-  <hr>
+      <div class="link-text">
+        Don't have an account? <a onclick="showView('registerStep1')">Sign up</a>
+      </div>
 
-  <!-- LICENSE CHECK -->
-  <h2>Check License</h2>
-  <input type="text" id="checkKey" placeholder="License Key"><br><br>
-  <input type="text" id="checkEmail" placeholder="Email"><br><br>
-  <button onclick="checkLicense()">Check License</button>
-  <pre id="checkResponse"></pre>
+      <div class="divider"><span>or</span></div>
+
+      <button class="btn btn-secondary" onclick="showView('licenseView')">Check License</button>
+
+      <div id="loginResponse" class="response-box"></div>
+    </div>
+
+    <!-- Register Step 1 -->
+    <div id="registerStep1" class="view">
+      <div class="step-indicator">
+        <span class="step active"></span>
+        <span class="step"></span>
+      </div>
+
+      <div class="header">
+        <h1>Sign Up</h1>
+      </div>
+      <div class="subtitle">Create your account</div>
+
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="regUsername" placeholder="">
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="text" id="regEmail" placeholder="">
+      </div>
+
+      <button class="btn btn-primary" onclick="showView('registerStep2')">Continue</button>
+      <button class="btn btn-secondary" onclick="showView('loginView')">Back to Login</button>
+    </div>
+
+    <!-- Register Step 2 -->
+    <div id="registerStep2" class="view">
+      <div class="step-indicator">
+        <span class="step"></span>
+        <span class="step active"></span>
+      </div>
+
+      <div class="header">
+        <h1>Almost Done</h1>
+      </div>
+      <div class="subtitle">Enter your license key</div>
+
+      <div class="info-box">
+        Your license key was sent to your email after purchase. Please enter it below to complete registration.
+      </div>
+
+      <div class="form-group">
+        <label>License Key</label>
+        <input type="text" id="regLicense" placeholder="">
+      </div>
+
+      <button class="btn btn-primary" onclick="registerUser()">Complete</button>
+      <button class="btn btn-secondary" onclick="showView('registerStep1')">Back</button>
+
+      <div id="regResponse" class="response-box"></div>
+    </div>
+
+    <!-- License Check View -->
+    <div id="licenseView" class="view">
+      <div class="header">
+        <h1>Verify License</h1>
+      </div>
+      <div class="subtitle">Check your license status</div>
+
+      <div class="form-group">
+        <label>License Key</label>
+        <input type="text" id="checkKey" placeholder="">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="text" id="checkEmail" placeholder="">
+      </div>
+
+      <button class="btn btn-primary" onclick="checkLicense()">Verify</button>
+      <button class="btn btn-secondary" onclick="showView('loginView')">Back to Login</button>
+
+      <div id="checkResponse" class="response-box"></div>
+    </div>
+  </div>
 
   <script>
+    function showView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+      
+      document.querySelectorAll('.response-box').forEach(box => {
+        box.classList.remove('show', 'success', 'error');
+      });
+    }
+
+    function showResponse(elementId, data, isError = false) {
+      const el = document.getElementById(elementId);
+      el.textContent = JSON.stringify(data, null, 2);
+      el.classList.add('show');
+      el.classList.toggle('error', isError);
+      el.classList.toggle('success', !isError);
+    }
+
     async function registerUser() {
       const data = {
         username: document.getElementById('regUsername').value,
@@ -43,7 +433,7 @@
         key: document.getElementById('regLicense').value,
         email: document.getElementById('regEmail').value
       };
-
+      
       try {
         const res = await fetch('/api/register', {
           method: 'POST',
@@ -51,9 +441,9 @@
           body: JSON.stringify(data)
         });
         const json = await res.json();
-        document.getElementById('regResponse').textContent = JSON.stringify(json, null, 2);
+        showResponse('regResponse', json, !res.ok);
       } catch (err) {
-        document.getElementById('regResponse').textContent = 'Error: ' + err;
+        showResponse('regResponse', { error: err.message }, true);
       }
     }
 
@@ -62,7 +452,7 @@
         username: document.getElementById('loginUsername').value,
         password: document.getElementById('loginPassword').value
       };
-
+      
       try {
         const res = await fetch('/api/login', {
           method: 'POST',
@@ -70,9 +460,9 @@
           body: JSON.stringify(data)
         });
         const json = await res.json();
-        document.getElementById('loginResponse').textContent = JSON.stringify(json, null, 2);
+        showResponse('loginResponse', json, !res.ok);
       } catch (err) {
-        document.getElementById('loginResponse').textContent = 'Error: ' + err;
+        showResponse('loginResponse', { error: err.message }, true);
       }
     }
 
@@ -81,7 +471,7 @@
         key: document.getElementById('checkKey').value,
         email: document.getElementById('checkEmail').value
       };
-
+      
       try {
         const res = await fetch('/api/checkLicense', {
           method: 'POST',
@@ -89,9 +479,9 @@
           body: JSON.stringify(data)
         });
         const json = await res.json();
-        document.getElementById('checkResponse').textContent = JSON.stringify(json, null, 2);
+        showResponse('checkResponse', json, !res.ok);
       } catch (err) {
-        document.getElementById('checkResponse').textContent = 'Error: ' + err;
+        showResponse('checkResponse', { error: err.message }, true);
       }
     }
   </script>
