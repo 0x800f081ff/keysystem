@@ -54,7 +54,9 @@ async function connectAdmin() {
     if(data.error) return alert(data.error);
     document.getElementById('adminContent').classList.remove('hidden');
     renderTables(data);
-  } catch(err) { alert(err); }
+  } catch(err) {
+    alert(err);
+  }
 }
 
 async function adminAction(action, idOrKey=null) {
@@ -68,27 +70,24 @@ async function adminAction(action, idOrKey=null) {
     body.user_id = idOrKey;
   } else if(action.includes('key')) {
     body.license_key = idOrKey;
-  } else if(action==='delete_key') {
-    body.license_key = idOrKey;
   }
 
   try {
     const res = await fetch('/api/admin', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', 
+      headers:{'Content-Type':'application/json'}, 
       body: JSON.stringify(body)
     });
     const data = await res.json();
-    alert(data.msg || data.error);
+    if(data.msg) alert(data.msg);
     renderTables(data);
   } catch(err) { alert(err); }
 }
 
 function renderTables(data) {
   // Licenses
-  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>HWID Locked</th><th>Email/HWID</th><th>Expiry</th><th>Banned</th><th>User</th><th>Actions</th></tr>';
+  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>HWID Locked</th><th>HWID</th><th>Expiry</th><th>Banned</th><th>User ID</th><th>User</th><th>Actions</th></tr>';
   data.licenses.forEach(l=>{
-    const username = l.user ? l.user.username : 'N/A';
     html += `<tr>
       <td>${l.id}</td>
       <td>${l.key_code}</td>
@@ -97,7 +96,8 @@ function renderTables(data) {
       <td>${l.hwid || 'N/A'}</td>
       <td>${l.expiry || 'N/A'}</td>
       <td>${l.banned}</td>
-      <td>${username}</td>
+      <td>${l.user_id || 'N/A'}</td>
+      <td>${l.user ? l.user.username : 'N/A'}</td>
       <td>
         <button onclick="adminAction('${l.banned? 'unban_key':'ban_key'}','${l.key_code}')">${l.banned? 'Unban':'Ban'}</button>
         <button onclick="adminAction('delete_key','${l.key_code}')">Delete</button>
@@ -121,6 +121,7 @@ function renderTables(data) {
       <td>${u.last_login_ip || 'N/A'}</td>
       <td>
         <button onclick="adminAction('${u.banned? 'unban_user':'ban_user'}','${u.id}')">${u.banned? 'Unban':'Ban'}</button>
+        <button onclick="adminAction('delete_user','${u.id}')">Delete</button>
       </td>
     </tr>`;
   });
