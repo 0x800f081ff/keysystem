@@ -5,10 +5,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { key, hwid } = req.body;
+  const { key, email } = req.body;
 
-  if (!key || !hwid) {
-    return res.status(400).json({ error: 'Missing key or HWID' });
+  if (!key || !email) {
+    return res.status(400).json({ error: 'Missing key or email' });
   }
 
   try {
@@ -20,19 +20,19 @@ export default async function handler(req, res) {
 
     const license = rows[0];
 
-    // Check HWID lock
-    if (license.hwid_locked && license.hwid && license.hwid !== hwid) {
-      return res.json({ valid: false, reason: 'License locked to another HWID' });
+    // Check if license is bound to another email
+    if (license.hwid_locked && license.hwid && license.hwid !== email) {
+      return res.json({ valid: false, reason: 'License locked to another email' });
     }
 
-    // Bind HWID if first use
+    // Bind license to email if first use
     if (!license.hwid) {
-      await pool.query("UPDATE licenses SET hwid = ? WHERE id = ?", [hwid, license.id]);
+      await pool.query("UPDATE licenses SET hwid = ? WHERE id = ?", [email, license.id]);
     }
 
     res.json({ valid: true, license });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
