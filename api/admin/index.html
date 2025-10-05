@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KeyAuth Admin Panel</title>
+<style>
+body{font-family:Arial;margin:20px;}
+h2{margin-top:40px;}
+table{border-collapse:collapse;width:100%;margin-bottom:20px;}
+th,td{border:1px solid #ccc;padding:5px;text-align:left;}
+form{margin-bottom:20px;}
+input,button{padding:5px;margin:3px;}
+.success{color:green;}
+</style>
+</head>
+<body>
+<h1>KeyAuth Admin Panel</h1>
+
+<label>Admin Token:</label>
+<input type="text" id="adminToken" placeholder="Your admin token"><br><br>
+
+<h2>Generate License</h2>
+<label>Allowed Uses: <input id="allowedUses" type="number" value="1"></label>
+<label>Days Valid (0=never expire): <input id="daysValid" type="number" value="0"></label>
+<label>HWID Locked: <input id="hwidLocked" type="checkbox"></label>
+<button onclick="adminAction('generate')">Generate License</button>
+
+<h2>Existing Licenses</h2>
+<div id="licensesTable"></div>
+
+<h2>Users</h2>
+<div id="usersTable"></div>
+
+<script>
+async function adminAction(action, idOrKey=null) {
+  const token = document.getElementById('adminToken').value;
+  let body = { token, action };
+
+  if(action === 'generate') {
+    body.allowed_uses = document.getElementById('allowedUses').value;
+    body.days_valid = document.getElementById('daysValid').value;
+    body.hwid_locked = document.getElementById('hwidLocked').checked ? 1 : 0;
+  } else if(action.includes('user')) {
+    body.user_id = idOrKey;
+  } else if(action.includes('key')) {
+    body.license_key = idOrKey;
+  }
+
+  try {
+    const res = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await res.json();
+    alert(data.msg);
+    renderTables(data);
+  } catch(err) { alert(err); }
+}
+
+function renderTables(data) {
+  // Licenses
+  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>HWID Locked</th><th>HWID</th><th>Expiry</th><th>Banned</th><th>User ID</th><th>Actions</th></tr>';
+  data.licenses.forEach(l=>{
+    html += `<tr>
+      <td>${l.id}</td>
+      <td>${l.key_code}</td>
+      <td>${l.uses}/${l.allowed_uses}</td>
+      <td>${l.hwid_locked}</td>
+      <td>${l.hwid || 'N/A'}</td>
+      <td>${l.expiry || 'N/A'}</td>
+      <td>${l.banned}</td>
+      <td>${l.user_id || 'N/A'}</td>
+      <td>
+        <button onclick="adminAction('${l.banned? 'unban_key':'ban_key'}','${l.key_code}')">${l.banned? 'Unban':'Ban'}</button>
+      </td>
+    </tr>`;
+  });
+  html += '</table>';
+  document.getElementById('licensesTable').innerHTML = html;
+
+  // Users
+  html = '<table><tr><th>ID</th><th>Username</th><th>Email</th><th>Admin</th><th>Banned</th><th>Created</th><th>Last Login</th><th>IP</th><th>Actions</th></tr>';
+  data.users.forEach(u=>{
+    html += `<tr>
+      <td>${u.id}</td>
+      <td>${u.username}</td>
+      <td>${u.email}</td>
+      <td>${u.is_admin}</td>
+      <td>${u.banned}</td>
+      <td>${u.created_at}</td>
+      <td>${u.last_login_at || 'N/A'}</td>
+      <td>${u.last_login_ip || 'N/A'}</td>
+      <td>
+        <button onclick="adminAction('${u.banned? 'unban_user':'ban_user'}','${u.id}')">${u.banned? 'Unban':'Ban'}</button>
+      </td>
+    </tr>`;
+  });
+  html += '</table>';
+  document.getElementById('usersTable').innerHTML = html;
+}
+</script>
+</body>
+</html>
