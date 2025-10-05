@@ -12,8 +12,8 @@
   <h2>Register</h2>
   <input type="text" id="regUsername" placeholder="Username"><br><br>
   <input type="password" id="regPassword" placeholder="Password"><br><br>
+  <input type="text" id="regEmail" placeholder="Email"><br><br>
   <input type="text" id="regLicense" placeholder="License Key"><br><br>
-  <input type="text" id="regHwid" placeholder="HWID"><br><br>
   <button onclick="registerUser()">Register</button>
   <pre id="regResponse"></pre>
 
@@ -31,7 +31,7 @@
   <!-- LICENSE CHECK -->
   <h2>Check License</h2>
   <input type="text" id="checkKey" placeholder="License Key"><br><br>
-  <input type="text" id="checkHwid" placeholder="HWID"><br><br>
+  <input type="text" id="checkEmail" placeholder="Email"><br><br>
   <button onclick="checkLicense()">Check License</button>
   <pre id="checkResponse"></pre>
 
@@ -41,7 +41,7 @@
         username: document.getElementById('regUsername').value,
         password: document.getElementById('regPassword').value,
         key: document.getElementById('regLicense').value,
-        hwid: document.getElementById('regHwid').value
+        email: document.getElementById('regEmail').value
       };
 
       try {
@@ -79,7 +79,7 @@
     async function checkLicense() {
       const data = {
         key: document.getElementById('checkKey').value,
-        hwid: document.getElementById('checkHwid').value
+        email: document.getElementById('checkEmail').value
       };
 
       try {
