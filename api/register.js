@@ -10,14 +10,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing username, password, license, or HWID' });
   }
 
-  // Nettoyage
   username = username.trim();
   password = password.trim();
   const licenseKey = key.trim().toUpperCase();
   hwid = hwid.trim();
 
+  // Récupère l'IP du client
+  const register_ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+
   try {
-    // Cherche la license (case-insensitive)
     const [licenses] = await pool.query(
       "SELECT * FROM licenses WHERE UPPER(key_code) = ?",
       [licenseKey]
@@ -25,45 +26,30 @@ export default async function handler(req, res) {
     if (!licenses.length) return res.status(400).json({ error: 'License not found' });
 
     const license = licenses[0];
-
-    // License bannie ?
     if (license.banned) return res.status(403).json({ error: 'License is banned' });
-
-    // Expirée ?
-    if (license.expiry && new Date(license.expiry) < new Date()) {
+    if (license.expiry && new Date(license.expiry) < new Date())
       return res.status(403).json({ error: 'License has expired' });
-    }
-
-    // Limite d'utilisations
-    if (license.allowed_uses !== 0 && license.uses >= license.allowed_uses) {
+    if (license.allowed_uses !== 0 && license.uses >= license.allowed_uses)
       return res.status(403).json({ error: 'License has reached max uses' });
-    }
-
-    // HWID binding
-    if (license.hwid_locked && license.hwid && license.hwid !== hwid) {
+    if (license.hwid_locked && license.hwid && license.hwid !== hwid)
       return res.status(403).json({ error: 'License is locked to another HWID' });
-    }
 
-    // Bind HWID si vide
     if (!license.hwid) {
       await pool.query("UPDATE licenses SET hwid = ? WHERE id = ?", [hwid, license.id]);
     }
 
-    // Vérifie si le username existe déjà
     const [users] = await pool.query("SELECT * FROM users WHERE username = ?", [username]);
     if (users.length) return res.status(400).json({ error: 'Username already exists' });
 
-    // Hash du mot de passe et création de l’utilisateur
     const hashed = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
-      "INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, NOW())",
-      [username, hashed]
+      "INSERT INTO users (username, password_hash, created_at, register_ip) VALUES (?, ?, NOW(), ?)",
+      [username, hashed, register_ip]
     );
 
-    // Incrémente le nombre d’utilisations de la license
     await pool.query("UPDATE licenses SET uses = uses + 1 WHERE id = ?", [license.id]);
 
-    res.json({ success: true, user_id: result.insertId });
+    res.json({ success: true, user_id: result.insertId, register_ip });
 
   } catch (err) {
     console.error(err);
