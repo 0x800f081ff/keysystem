@@ -12,13 +12,17 @@ th,td{border:1px solid #ccc;padding:5px;text-align:left;}
 form{margin-bottom:20px;}
 input,button{padding:5px;margin:3px;}
 .success{color:green;}
+.hidden{display:none;}
 </style>
 </head>
 <body>
 <h1>KeyAuth Admin Panel</h1>
 
 <label>Admin Token:</label>
-<input type="text" id="adminToken" placeholder="Your admin token"><br><br>
+<input type="text" id="adminToken" placeholder="Your admin token">
+<button onclick="connectAdmin()">Connect</button>
+
+<div id="adminContent" class="hidden">
 
 <h2>Generate License</h2>
 <label>Allowed Uses: <input id="allowedUses" type="number" value="1"></label>
@@ -32,10 +36,31 @@ input,button{padding:5px;margin:3px;}
 <h2>Users</h2>
 <div id="usersTable"></div>
 
+</div>
+
 <script>
+let adminToken = '';
+
+async function connectAdmin() {
+  adminToken = document.getElementById('adminToken').value.trim();
+  if(!adminToken) return alert('Enter admin token');
+  try {
+    const res = await fetch('/api/admin', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ token: adminToken, action: 'none' }) // action 'none' juste pour tester
+    });
+    const data = await res.json();
+    if(data.error) return alert(data.error);
+    document.getElementById('adminContent').classList.remove('hidden');
+    renderTables(data);
+  } catch(err) {
+    alert(err);
+  }
+}
+
 async function adminAction(action, idOrKey=null) {
-  const token = document.getElementById('adminToken').value;
-  let body = { token, action };
+  let body = { token: adminToken, action };
 
   if(action === 'generate') {
     body.allowed_uses = document.getElementById('allowedUses').value;
