@@ -1,5 +1,11 @@
 import pool from '../../db.js';
 
+function formatDate(d) {
+  if(!d) return 'N/A';
+  const date = new Date(d);
+  return date.toLocaleString('en-GB', { hour12: false }); // e.g., 05/10/2025, 23:42:54
+}
+
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
 
@@ -47,8 +53,15 @@ export default async function handler(req,res){
     }
 
     // Fetch users & licenses for table rendering
-    const [users] = await pool.query("SELECT id,username,email,is_admin,banned,created_at,last_login_at,last_login_ip FROM users ORDER BY id DESC");
+    const [usersRaw] = await pool.query("SELECT id,username,email,is_admin,banned,created_at,last_login_at,last_login_ip FROM users ORDER BY id DESC");
     const [licensesRaw] = await pool.query("SELECT * FROM licenses ORDER BY id DESC");
+
+    // Format user dates
+    const users = usersRaw.map(u=>({
+      ...u,
+      created_at: formatDate(u.created_at),
+      last_login_at: formatDate(u.last_login_at)
+    }));
 
     // Attach user info to license
     const licenses = await Promise.all(licensesRaw.map(async l=>{
@@ -56,6 +69,8 @@ export default async function handler(req,res){
         const [u] = await pool.query("SELECT id,username FROM users WHERE id=?",[l.user_id]);
         l.user = u[0] || null;
       } else l.user=null;
+      // format expiry
+      l.expiry = formatDate(l.expiry);
       return l;
     }));
 
@@ -65,4 +80,4 @@ export default async function handler(req,res){
     console.error(err);
     res.status(500).json({error:'Server error',details:err.message});
   }
-}
+} 
