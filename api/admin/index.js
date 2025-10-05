@@ -28,6 +28,12 @@ export default async function handler(req,res){
       await pool.query("UPDATE licenses SET banned=0 WHERE user_id=?",[user_id]);
       msg=`User ${user_id} unbanned and linked licenses also unbanned.`;
     }
+    // Delete user + delete linked licenses
+    else if(action==='delete_user' && user_id){
+      await pool.query("DELETE FROM licenses WHERE user_id=?",[user_id]);
+      await pool.query("DELETE FROM users WHERE id=?",[user_id]);
+      msg=`User ${user_id} and all linked licenses deleted.`;
+    }
     // Ban/unban key
     else if((action==='ban_key' || action==='unban_key') && license_key){
       const banned = action==='ban_key'?1:0;
