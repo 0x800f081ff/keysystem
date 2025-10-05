@@ -29,19 +29,19 @@ export default async function handler(req, res) {
 
     const license = licenses[0];
 
-    // Vérifications
+    // Vérifications license
     if (license.banned) return res.status(403).json({ error: 'License is banned' });
     if (license.expiry && new Date(license.expiry) < new Date())
       return res.status(403).json({ error: 'License has expired' });
     if (license.allowed_uses !== 0 && license.uses >= license.allowed_uses)
       return res.status(403).json({ error: 'License has reached max uses' });
 
-    // HWID
+    // HWID binding si nécessaire
     if (license.hwid_locked && license.hwid && license.hwid !== hwid) {
       return res.status(403).json({ error: 'License is locked to another HWID' });
     }
 
-    if (!license.hwid) {
+    if (license.hwid_locked && !license.hwid) {
       await pool.query("UPDATE licenses SET hwid = ? WHERE id = ?", [hwid, license.id]);
     }
 
@@ -56,10 +56,18 @@ export default async function handler(req, res) {
       [username, hashed, clientIP]
     );
 
-    // Incrémente le nombre d’utilisations de la license
-    await pool.query("UPDATE licenses SET uses = uses + 1 WHERE id = ?", [license.id]);
+    // Lier la license à cet utilisateur
+    await pool.query(
+      "UPDATE licenses SET user_id = ?, uses = uses + 1 WHERE id = ?",
+      [result.insertId, license.id]
+    );
 
-    res.json({ success: true, user_id: result.insertId, license_key: license.key_code, register_ip: clientIP });
+    res.json({
+      success: true,
+      user_id: result.insertId,
+      license_key: license.key_code,
+      register_ip: clientIP
+    });
 
   } catch (err) {
     console.error(err);
