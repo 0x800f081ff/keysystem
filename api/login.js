@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') 
     return res.status(405).json({ error: 'Method not allowed' });
 
-  const { username, password } = req.body; // plus besoin de hwid
+  const { username, password } = req.body; // no hwid needed
   if (!username || !password) {
     return res.status(400).json({ error: 'Missing username or password' });
   }
@@ -14,19 +14,18 @@ export default async function handler(req, res) {
   const usernameClean = username.trim();
 
   try {
-    // 1️⃣ Cherche l'utilisateur
+    // 1️⃣ Fetch user
     const [users] = await pool.query("SELECT * FROM users WHERE username = ?", [usernameClean]);
     if (!users.length) return res.status(400).json({ error: 'User not found' });
 
     const user = users[0];
-
     if (user.banned) return res.status(403).json({ error: 'User is banned' });
 
-    // 2️⃣ Vérifie le mot de passe
+    // 2️⃣ Verify password
     const passwordValid = await bcrypt.compare(password, user.password_hash);
     if (!passwordValid) return res.status(403).json({ error: 'Invalid password' });
 
-    // 3️⃣ Vérifie la license la plus récente de l’utilisateur
+    // 3️⃣ Fetch the latest license of this user
     const [licenses] = await pool.query(
       "SELECT * FROM licenses WHERE user_id = ? ORDER BY id DESC LIMIT 1",
       [user.id]
@@ -35,35 +34,30 @@ export default async function handler(req, res) {
     let licenseData = null;
     if (licenses.length) {
       const license = licenses[0];
+
+      // Map hwid -> email
       licenseData = {
         key: license.key_code,
+        email: license.hwid || null, // previously hwid, now treated as email
         hwid_locked: license.hwid_locked,
         uses: license.uses,
         allowed_uses: license.allowed_uses,
         banned: license.banned,
-        expiry: license.expiry,
-        hwid: license.hwid || null // reste null car on ne reçoit pas de hwid ici
+        expiry: license.expiry
       };
 
       if (license.banned) return res.status(403).json({ error: 'License is banned' });
       if (license.expiry && new Date(license.expiry) < new Date())
         return res.status(403).json({ error: 'License has expired' });
-
-      // HWID locked check uniquement si hwid est déjà défini
-      if (license.hwid_locked && license.hwid) {
-        // ici on ne peut pas vérifier le hwid car pas envoyé par le client
-        // donc juste un warning côté admin ou log
-        console.warn(`License ${license.key_code} is HWID locked but login skipped HWID check`);
-      }
     }
 
-    // 4️⃣ Met à jour la dernière connexion et l’IP
+    // 4️⃣ Update last login info
     await pool.query(
       "UPDATE users SET last_login_at = NOW(), last_login_ip = ? WHERE id = ?",
       [login_ip, user.id]
     );
 
-    // 5️⃣ Retourne le résultat
+    // 5️⃣ Return response
     res.json({
       success: true,
       user_id: user.id,
