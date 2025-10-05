@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyAuth Test</title>
+</head>
+<body>
+  <h1>KeyAuth Test Frontend</h1>
+
+  <!-- REGISTER -->
+  <h2>Register</h2>
+  <input type="text" id="regUsername" placeholder="Username"><br><br>
+  <input type="password" id="regPassword" placeholder="Password"><br><br>
+  <input type="text" id="regLicense" placeholder="License Key"><br><br>
+  <input type="text" id="regHwid" placeholder="HWID"><br><br>
+  <button onclick="registerUser()">Register</button>
+  <pre id="regResponse"></pre>
+
+  <hr>
+
+  <!-- LOGIN -->
+  <h2>Login</h2>
+  <input type="text" id="loginUsername" placeholder="Username"><br><br>
+  <input type="password" id="loginPassword" placeholder="Password"><br><br>
+  <button onclick="loginUser()">Login</button>
+  <pre id="loginResponse"></pre>
+
+  <hr>
+
+  <!-- LICENSE CHECK -->
+  <h2>Check License</h2>
+  <input type="text" id="checkKey" placeholder="License Key"><br><br>
+  <input type="text" id="checkHwid" placeholder="HWID"><br><br>
+  <button onclick="checkLicense()">Check License</button>
+  <pre id="checkResponse"></pre>
+
+  <script>
+    async function registerUser() {
+      const data = {
+        username: document.getElementById('regUsername').value,
+        password: document.getElementById('regPassword').value,
+        key: document.getElementById('regLicense').value,
+        hwid: document.getElementById('regHwid').value
+      };
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        document.getElementById('regResponse').textContent = JSON.stringify(json, null, 2);
+      } catch (err) {
+        document.getElementById('regResponse').textContent = 'Error: ' + err;
+      }
+    }
+
+    async function loginUser() {
+      const data = {
+        username: document.getElementById('loginUsername').value,
+        password: document.getElementById('loginPassword').value
+      };
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        document.getElementById('loginResponse').textContent = JSON.stringify(json, null, 2);
+      } catch (err) {
+        document.getElementById('loginResponse').textContent = 'Error: ' + err;
+      }
+    }
+
+    async function checkLicense() {
+      const data = {
+        key: document.getElementById('checkKey').value,
+        hwid: document.getElementById('checkHwid').value
+      };
+
+      try {
+        const res = await fetch('/api/checkLicense', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        document.getElementById('checkResponse').textContent = JSON.stringify(json, null, 2);
+      } catch (err) {
+        document.getElementById('checkResponse').textContent = 'Error: ' + err;
+      }
+    }
+  </script>
+</body>
+</html>
