@@ -12,7 +12,9 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080"><defs><linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%231e3c72;stop-opacity:1" /><stop offset="100%" style="stop-color:%232a5298;stop-opacity:1" /></linearGradient></defs><rect width="1920" height="1080" fill="url(%23grad)"/></svg>') no-repeat center center fixed;
       background-size: cover;
       min-height: 100vh;
@@ -518,9 +520,18 @@
         } else if (status === 404 || data.error.includes('not found')) {
           icon = '🔍';
           title = 'Not Found';
+        } else if (status === 405) {
+          icon = '⛔';
+          title = 'Method Not Allowed';
         } else if (status === 500) {
           icon = '⚠️';
           title = 'Server Error';
+        } else if (data.error.includes('already exists')) {
+          icon = '⚠️';
+          title = 'Already Exists';
+        } else if (data.error.includes('Missing')) {
+          icon = '📝';
+          title = 'Missing Information';
         }
         
         let html = `
@@ -542,7 +553,101 @@
         return html;
       }
       
-      // Success response with user data
+      // License check response - Invalid
+      if (data.valid === false) {
+        let icon = '❌';
+        let title = 'License Invalid';
+        
+        if (data.reason && data.reason.includes('not found')) {
+          icon = '🔍';
+          title = 'License Not Found';
+        } else if (data.reason && data.reason.includes('another email')) {
+          icon = '🔒';
+          title = 'Email Mismatch';
+        }
+        
+        return `
+          <div class="response-title">${icon} ${title}</div>
+          <div class="response-message">${data.reason || 'This license is not valid'}</div>
+        `;
+      }
+      
+      // License check response - Valid
+      if (data.valid === true && data.license) {
+        const lic = data.license;
+        const isExpired = lic.expiry && new Date(lic.expiry) < new Date();
+        const isBanned = lic.banned;
+        
+        let statusBadge = '<span class="status-badge status-active">Valid</span>';
+        if (isBanned) {
+          statusBadge = '<span class="status-badge status-banned">Banned</span>';
+        } else if (isExpired) {
+          statusBadge = '<span class="status-badge status-expired">Expired</span>';
+        }
+        
+        return `
+          <div class="response-title">✅ License Verified</div>
+          <div class="response-message">This license key is valid and active</div>
+          <div class="license-info">
+            <div class="detail-row">
+              <span class="detail-label">Status:</span>
+              <span class="detail-value">${statusBadge}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">License Key:</span>
+              <span class="detail-value">${lic.key}</span>
+            </div>
+            ${lic.email ? `
+            <div class="detail-row">
+              <span class="detail-label">Email:</span>
+              <span class="detail-value">${lic.email}</span>
+            </div>
+            ` : ''}
+            <div class="detail-row">
+              <span class="detail-label">Uses:</span>
+              <span class="detail-value">${lic.uses} / ${lic.allowed_uses}</span>
+            </div>
+            ${lic.expiry ? `
+            <div class="detail-row">
+              <span class="detail-label">Expires:</span>
+              <span class="detail-value">${formatDate(lic.expiry)}</span>
+            </div>
+            ` : ''}
+            <div class="detail-row">
+              <span class="detail-label">HWID Locked:</span>
+              <span class="detail-value">${lic.hwid_locked ? 'Yes' : 'No'}</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Success response - Registration
+      if (data.success && data.user_id && data.license_key) {
+        return `
+          <div class="response-title">✅ Registration Successful</div>
+          <div class="response-message">Your account has been created successfully!</div>
+          <div class="response-details">
+            <div class="detail-row">
+              <span class="detail-label">User ID:</span>
+              <span class="detail-value">${data.user_id}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">License Key:</span>
+              <span class="detail-value">${data.license_key}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Email:</span>
+              <span class="detail-value">${data.email}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Registration IP:</span>
+              <span class="detail-value">${data.register_ip}</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Success response - Login with user data
       if (data.success && data.username) {
         let html = `
           <div class="response-title">✅ Login Successful</div>
