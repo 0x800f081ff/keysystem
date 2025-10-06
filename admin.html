@@ -1147,41 +1147,28 @@
 
     <div class="stats-grid" id="statsGrid"></div>
 
-    <!-- Generate License Section -->
-    <div class="section">
-      <h2 class="section-title">Generate New License</h2>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Allowed Uses</label>
-          <div class="number-input-container">
-            <input type="text" id="allowedUses" class="number-input" value="1" min="1">
-            <div class="number-controls">
-              <button class="number-btn" onclick="incrementNumber('allowedUses')">▲</button>
-              <button class="number-btn" onclick="decrementNumber('allowedUses')">▼</button>
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Validity (0 = Lifetime)</label>
-          <div class="dropdown-container">
-            <select id="timeValid" class="dropdown-select">
-              <option value="10s">10 seconds</option>
-              <option value="10m">10 minutes</option>
-              <option value="1h">1 hour</option>
-              <option value="10h">10 hours</option>
-              <option value="1d">1 day</option>
-              <option value="10d">10 days</option>
-              <option value="1y">1 year</option>
-              <option value="0" selected>Lifetime</option>
-            </select>
-            <div class="dropdown-arrow">▼</div>
-          </div>
+   <!-- Generate License Section -->
+<div class="section">
+  <h2 class="section-title">Generate New License</h2>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Allowed Uses</label>
+      <div class="number-input-container">
+        <input type="text" id="allowedUses" class="number-input" value="1" min="1">
+        <div class="number-controls">
+          <button class="number-btn" onclick="incrementNumber('allowedUses')">▲</button>
+          <button class="number-btn" onclick="decrementNumber('allowedUses')">▼</button>
         </div>
       </div>
-      <button class="btn btn-success" onclick="adminAction('generate')">Generate License Key</button>
-      <div id="generatedKey"></div>
     </div>
-
+    <div class="form-group">
+      <label>Validity (0 = Lifetime)</label>
+      <input type="text" id="timeValid" placeholder="e.g., 1d, 10h, 30m, 0" value="0">
+    </div>
+  </div>
+  <button class="btn btn-success" onclick="adminAction('generate')">Generate License Key</button>
+  <div id="generatedKey"></div>
+</div>
     <!-- Licenses Section -->
     <div class="section">
       <h2 class="section-title">License Keys</h2>
@@ -1568,3 +1555,4 @@
   </script>
 </body>
 </html>
+
