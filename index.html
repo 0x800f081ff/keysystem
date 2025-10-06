@@ -497,8 +497,16 @@
       el.innerHTML = formatResponse(data, status);
       el.classList.remove('success', 'error', 'warning');
       
-      if (status >= 200 && status < 300) {
-        el.classList.add('success');
+      // Check for invalid license (valid: false)
+      if (data.valid === false) {
+        el.classList.add('error');
+      } else if (status >= 200 && status < 300) {
+        // Check if it's actually an error disguised as 200
+        if (data.error) {
+          el.classList.add('error');
+        } else {
+          el.classList.add('success');
+        }
       } else if (status >= 400 && status < 500) {
         el.classList.add('error');
       } else if (status >= 500) {
@@ -556,19 +564,22 @@
       // License check response - Invalid
       if (data.valid === false) {
         let icon = '❌';
-        let title = 'License Invalid';
+        let title = 'Invalid License';
+        let message = data.reason || 'This license is not valid';
         
-        if (data.reason && data.reason.includes('not found')) {
+        if (data.reason && data.reason.toLowerCase().includes('not found')) {
           icon = '🔍';
           title = 'License Not Found';
-        } else if (data.reason && data.reason.includes('another email')) {
+          message = 'The license key you entered does not exist in our system.';
+        } else if (data.reason && data.reason.toLowerCase().includes('another email')) {
           icon = '🔒';
           title = 'Email Mismatch';
+          message = 'This license key is already bound to a different email address.';
         }
         
         return `
           <div class="response-title">${icon} ${title}</div>
-          <div class="response-message">${data.reason || 'This license is not valid'}</div>
+          <div class="response-message">${message}</div>
         `;
       }
       
