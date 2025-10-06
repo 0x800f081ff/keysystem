@@ -7,20 +7,19 @@ export default async function handler(req, res) {
 
   let { username, password, key, email, hwid } = req.body;
 
-  // Trim all if defined
+  // Trim fields
   username = username?.trim();
   password = password?.trim();
   key = key?.trim()?.toUpperCase();
   email = email?.trim();
-  hwid = hwid?.trim();
+  hwid = hwid?.trim(); // optional for website
 
-  // ✅ Detect which fields are missing
+  // ✅ Required fields for all registrations
   const missing = [];
   if (!username) missing.push('username');
   if (!password) missing.push('password');
   if (!key) missing.push('license key');
   if (!email) missing.push('email');
-  if (!hwid) missing.push('hwid');
 
   if (missing.length > 0) {
     return res.status(400).json({
@@ -58,11 +57,16 @@ export default async function handler(req, res) {
       [username, hashed, email, clientIP]
     );
 
-    // ✅ Link license to user & assign HWID
-    await pool.query(
-      "UPDATE licenses SET user_id = ?, hwid = ?, uses = uses + 1 WHERE id = ?",
-      [result.insertId, hwid, license.id]
-    );
+    // ✅ Link license to user & assign HWID only if provided
+    const updateData = [result.insertId, license.id];
+    let updateQuery = "UPDATE licenses SET user_id = ?, uses = uses + 1";
+    if (hwid) {
+      updateQuery += ", hwid = ?";
+      updateData.splice(1, 0, hwid); // insert hwid after user_id
+    }
+    updateQuery += " WHERE id = ?";
+
+    await pool.query(updateQuery, updateData);
 
     res.json({
       success: true,
@@ -70,7 +74,7 @@ export default async function handler(req, res) {
       username,
       email,
       license_key: license.key_code,
-      hwid,
+      hwid: hwid || null, // only if client sent it
       register_ip: clientIP
     });
 
