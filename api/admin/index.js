@@ -1,27 +1,6 @@
 import pool from '../../db.js';
 
-// Converts ISO date → readable remaining time (e.g. "10d 2h 5m")
-function getRemainingTime(expiry) {
-  if (!expiry) return 'Lifetime';
-  const now = new Date();
-  const exp = new Date(expiry);
-  if (exp < now) return 'Expired';
-
-  let diff = exp - now;
-  const y = Math.floor(diff / (1000 * 60 * 60 * 24 * 365)); diff -= y * 1000 * 60 * 60 * 24 * 365;
-  const d = Math.floor(diff / (1000 * 60 * 60 * 24)); diff -= d * 1000 * 60 * 60 * 24;
-  const h = Math.floor(diff / (1000 * 60 * 60)); diff -= h * 1000 * 60 * 60;
-  const m = Math.floor(diff / (1000 * 60));
-
-  const parts = [];
-  if (y) parts.push(`${y}y`);
-  if (d) parts.push(`${d}d`);
-  if (h) parts.push(`${h}h`);
-  if (m) parts.push(`${m}m`);
-  return parts.join(' ') || 'Less than 1m';
-}
-
-// Converts "10s", "10m", "10h", "10d", "10y" → milliseconds
+// Converts strings like 10s / 10m / 10h / 10d / 10y to milliseconds
 function parseTimeDuration(str) {
   if (!str || str === '0') return null; // Lifetime
   const match = str.match(/(\d+)([smhdy])/i);
@@ -41,8 +20,15 @@ function parseTimeDuration(str) {
   return num * multipliers[unit];
 }
 
+function formatDate(d) {
+  if (!d) return 'Lifetime';
+  const date = new Date(d);
+  if (isNaN(date)) return 'Lifetime';
+  return date.toISOString(); // keep ISO for countdown calculations
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') 
+  if (req.method !== 'POST')
     return res.status(405).json({ error: 'Method not allowed' });
 
   const { token, action, user_id, license_key, allowed_uses, time_valid } = req.body;
@@ -53,7 +39,7 @@ export default async function handler(req, res) {
   try {
     let msg = '';
 
-    // ✅ Generate new license
+    // Generate license
     if (action === 'generate') {
       const key = (Math.random().toString(36).substring(2, 17) + Math.random().toString(36).substring(2, 17)).toUpperCase();
       const durationMs = parseTimeDuration(time_valid);
@@ -61,47 +47,42 @@ export default async function handler(req, res) {
 
       await pool.query(
         "INSERT INTO licenses (key_code, allowed_uses, hwid_locked, expiry) VALUES (?, ?, ?, ?)",
-        [key, allowed_uses || 1, 1, expiry] // hwid_locked always on
+        [key, allowed_uses || 1, 1, expiry] // HWID locked always on
       );
 
       msg = `License generated: ${key}`;
     }
-
-    // ✅ Ban / unban user + linked licenses
+    // Ban / unban user + linked licenses
     else if (action === 'ban_user' && user_id) {
       await pool.query("UPDATE users SET banned=1 WHERE id=?", [user_id]);
       await pool.query("UPDATE licenses SET banned=1 WHERE user_id=?", [user_id]);
       msg = `User ${user_id} banned and linked licenses also banned.`;
-    } 
-    else if (action === 'unban_user' && user_id) {
+    } else if (action === 'unban_user' && user_id) {
       await pool.query("UPDATE users SET banned=0 WHERE id=?", [user_id]);
       await pool.query("UPDATE licenses SET banned=0 WHERE user_id=?", [user_id]);
       msg = `User ${user_id} unbanned and linked licenses also unbanned.`;
     }
-
-    // ✅ Delete user + linked licenses
+    // Delete user + linked licenses
     else if (action === 'delete_user' && user_id) {
       await pool.query("DELETE FROM licenses WHERE user_id=?", [user_id]);
       await pool.query("DELETE FROM users WHERE id=?", [user_id]);
       msg = `User ${user_id} and all linked licenses deleted.`;
     }
-
-    // ✅ Ban / unban license
+    // Ban / unban license
     else if ((action === 'ban_key' || action === 'unban_key') && license_key) {
       const banned = action === 'ban_key' ? 1 : 0;
       await pool.query("UPDATE licenses SET banned=? WHERE key_code=?", [banned, license_key]);
       msg = `License ${license_key} ${banned ? 'banned' : 'unbanned'}.`;
     }
-
-    // ✅ Delete license
+    // Delete license
     else if (action === 'delete_key' && license_key) {
       await pool.query("DELETE FROM licenses WHERE key_code=?", [license_key]);
       msg = `License ${license_key} deleted.`;
     }
 
-    // ✅ Fetch updated users + licenses
+    // Fetch users
     const [usersRaw] = await pool.query(
-      "SELECT id, username, email, is_admin, banned, created_at, last_login_at, last_login_ip FROM users ORDER BY id DESC"
+      "SELECT id,username,email,is_admin,banned,created_at,last_login_at,last_login_ip FROM users ORDER BY id DESC"
     );
 
     const [licensesRaw] = await pool.query("SELECT * FROM licenses ORDER BY id DESC");
@@ -114,30 +95,43 @@ export default async function handler(req, res) {
 
     const licenses = await Promise.all(
       licensesRaw.map(async l => {
-        let user = null;
+        // Attach user
         if (l.user_id) {
-          const [u] = await pool.query("SELECT id, username, email FROM users WHERE id=?", [l.user_id]);
-          user = u[0] || null;
+          const [u] = await pool.query("SELECT id,username,email FROM users WHERE id=?", [l.user_id]);
+          l.user = u[0] || null;
+          l.email = l.user ? l.user.email : 'Not Linked';
+        } else {
+          l.user = null;
+          l.email = 'Not Linked';
         }
 
-        const expiryCooldown = getRemainingTime(l.expiry);
-        const expiryDisplay = !l.expiry ? 'Lifetime' : expiryCooldown;
+        // Expiry formatting
+        let expiryDisplay = 'Lifetime';
+        if (l.expiry) {
+          const exp = new Date(l.expiry);
+          if (exp < new Date()) expiryDisplay = 'Expired';
+          else {
+            const now = Date.now();
+            const diff = exp - now;
+            const seconds = Math.floor(diff / 1000);
+            if (seconds < 60) expiryDisplay = `${seconds}s`;
+            else if (seconds < 3600) expiryDisplay = `${Math.floor(seconds/60)}m`;
+            else if (seconds < 86400) expiryDisplay = `${Math.floor(seconds/3600)}h`;
+            else if (seconds < 86400*30) expiryDisplay = `${Math.floor(seconds/86400)}d`;
+            else if (seconds < 86400*365) expiryDisplay = `${Math.floor(seconds/(86400*30))}M`;
+            else expiryDisplay = `${Math.floor(seconds/(86400*365))}y`;
+          }
+        }
 
-        return {
-          id: l.id,
-          key: l.key_code,
-          uses: `${l.uses}/${l.allowed_uses}`,
-          hwid_locked: !!l.hwid_locked,
-          email: user?.email || 'Not linked',
-          expiry: expiryDisplay,
-          banned: !!l.banned,
-          user: user ? user.username : 'Unlinked',
-          cooldown: expiryCooldown // useful if you want to show countdown
-        };
+        l.expiry_raw = l.expiry ? new Date(l.expiry).toISOString() : 'Lifetime';
+        l.expiry = expiryDisplay;
+
+        return l;
       })
     );
 
     res.json({ msg, users, licenses });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error', details: err.message });
