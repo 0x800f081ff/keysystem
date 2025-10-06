@@ -1,13 +1,27 @@
 import pool from '../../db.js';
 
-function formatDate(d) {
-  if (!d) return 'Lifetime';
-  const date = new Date(d);
-  if (isNaN(date)) return 'Lifetime';
-  return date.toISOString(); // keep ISO for countdown calculations
+// Converts ISO date → readable remaining time (e.g. "10d 2h 5m")
+function getRemainingTime(expiry) {
+  if (!expiry) return 'Lifetime';
+  const now = new Date();
+  const exp = new Date(expiry);
+  if (exp < now) return 'Expired';
+
+  let diff = exp - now;
+  const y = Math.floor(diff / (1000 * 60 * 60 * 24 * 365)); diff -= y * 1000 * 60 * 60 * 24 * 365;
+  const d = Math.floor(diff / (1000 * 60 * 60 * 24)); diff -= d * 1000 * 60 * 60 * 24;
+  const h = Math.floor(diff / (1000 * 60 * 60)); diff -= h * 1000 * 60 * 60;
+  const m = Math.floor(diff / (1000 * 60));
+
+  const parts = [];
+  if (y) parts.push(`${y}y`);
+  if (d) parts.push(`${d}d`);
+  if (h) parts.push(`${h}h`);
+  if (m) parts.push(`${m}m`);
+  return parts.join(' ') || 'Less than 1m';
 }
 
-// Converts strings like 10s / 10m / 10h / 10d / 10y to milliseconds
+// Converts "10s", "10m", "10h", "10d", "10y" → milliseconds
 function parseTimeDuration(str) {
   if (!str || str === '0') return null; // Lifetime
   const match = str.match(/(\d+)([smhdy])/i);
@@ -87,7 +101,7 @@ export default async function handler(req, res) {
 
     // ✅ Fetch updated users + licenses
     const [usersRaw] = await pool.query(
-      "SELECT id,username,email,is_admin,banned,created_at,last_login_at,last_login_ip FROM users ORDER BY id DESC"
+      "SELECT id, username, email, is_admin, banned, created_at, last_login_at, last_login_ip FROM users ORDER BY id DESC"
     );
 
     const [licensesRaw] = await pool.query("SELECT * FROM licenses ORDER BY id DESC");
@@ -100,24 +114,26 @@ export default async function handler(req, res) {
 
     const licenses = await Promise.all(
       licensesRaw.map(async l => {
+        let user = null;
         if (l.user_id) {
-          const [u] = await pool.query("SELECT id,username,email FROM users WHERE id=?", [l.user_id]);
-          l.user = u[0] || null;
-        } else l.user = null;
-
-        let expiryDisplay = 'Lifetime';
-        if (l.expiry) {
-          const exp = new Date(l.expiry);
-          if (exp < new Date()) expiryDisplay = 'Expired';
-          else expiryDisplay = exp.toISOString();
+          const [u] = await pool.query("SELECT id, username, email FROM users WHERE id=?", [l.user_id]);
+          user = u[0] || null;
         }
 
-        l.expiry_raw = l.expiry ? new Date(l.expiry).toISOString() : 'Lifetime';
-        l.expiry = expiryDisplay;
-        l.email = l.hwid || null; // show linked HWID/email if needed
-        delete l.hwid;
+        const expiryCooldown = getRemainingTime(l.expiry);
+        const expiryDisplay = !l.expiry ? 'Lifetime' : expiryCooldown;
 
-        return l;
+        return {
+          id: l.id,
+          key: l.key_code,
+          uses: `${l.uses}/${l.allowed_uses}`,
+          hwid_locked: !!l.hwid_locked,
+          email: user?.email || 'Not linked',
+          expiry: expiryDisplay,
+          banned: !!l.banned,
+          user: user ? user.username : 'Unlinked',
+          cooldown: expiryCooldown // useful if you want to show countdown
+        };
       })
     );
 
