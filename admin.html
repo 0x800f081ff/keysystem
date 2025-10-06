@@ -111,36 +111,41 @@
       animation: float 22s ease-in-out infinite reverse;
     }
 
-    .custom-scrollbar {
+.custom-scrollbar {
       scrollbar-width: thin;
-      scrollbar-color: rgba(52, 152, 219, 0.4) rgba(255, 255, 255, 0.05);
+      scrollbar-color: rgba(52, 152, 219, 0.6) rgba(255, 255, 255, 0.08);
     }
 
     .custom-scrollbar::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
     }
 
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      margin: 4px;
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(52, 152, 219, 0.5);
-      border-radius: 5px;
-      border: 2px solid transparent;
-      background-clip: content-box;
+      background: rgba(52, 152, 219, 0.6);
+      border-radius: 6px;
+      border: 3px solid transparent;
+      background-clip: padding-box;
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: rgba(52, 152, 219, 0.7);
-      background-clip: content-box;
+      background: rgba(52, 152, 219, 0.8);
+      background-clip: padding-box;
     }
 
     .custom-scrollbar::-webkit-scrollbar-thumb:active {
-      background: rgba(52, 152, 219, 0.9);
-      background-clip: content-box;
+      background: rgba(52, 152, 219, 1);
+      background-clip: padding-box;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-corner {
+      background: rgba(255, 255, 255, 0.08);
     }
 
     input[type="number"]::-webkit-inner-spin-button,
@@ -717,3 +722,4 @@
   </script>
 </body>
 </html>
+
