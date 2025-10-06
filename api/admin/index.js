@@ -1,4 +1,5 @@
 import pool from '../../db.js';
+import bcrypt from 'bcryptjs';
 
 // Converts strings like 10s / 10m / 10h / 10d / 10y to milliseconds
 function parseTimeDuration(str) {
@@ -31,7 +32,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST')
     return res.status(405).json({ error: 'Method not allowed' });
 
-  const { token, action, user_id, license_key, allowed_uses, time_valid } = req.body;
+  const { token, action, user_id, license_key, allowed_uses, time_valid, new_password } = req.body;
 
   if (token !== process.env.ADMIN_TOKEN)
     return res.status(403).json({ error: 'Unauthorized' });
@@ -39,7 +40,7 @@ export default async function handler(req, res) {
   try {
     let msg = '';
 
-    // Generate license
+    // ✅ License actions
     if (action === 'generate') {
       const key = (Math.random().toString(36).substring(2, 17) + Math.random().toString(36).substring(2, 17)).toUpperCase();
       const durationMs = parseTimeDuration(time_valid);
@@ -52,32 +53,37 @@ export default async function handler(req, res) {
 
       msg = `License generated: ${key}`;
     }
-    // Ban / unban user + linked licenses
     else if (action === 'ban_user' && user_id) {
       await pool.query("UPDATE users SET banned=1 WHERE id=?", [user_id]);
       await pool.query("UPDATE licenses SET banned=1 WHERE user_id=?", [user_id]);
       msg = `User ${user_id} banned and linked licenses also banned.`;
-    } else if (action === 'unban_user' && user_id) {
+    } 
+    else if (action === 'unban_user' && user_id) {
       await pool.query("UPDATE users SET banned=0 WHERE id=?", [user_id]);
       await pool.query("UPDATE licenses SET banned=0 WHERE user_id=?", [user_id]);
       msg = `User ${user_id} unbanned and linked licenses also unbanned.`;
     }
-    // Delete user + linked licenses
     else if (action === 'delete_user' && user_id) {
       await pool.query("DELETE FROM licenses WHERE user_id=?", [user_id]);
       await pool.query("DELETE FROM users WHERE id=?", [user_id]);
       msg = `User ${user_id} and all linked licenses deleted.`;
     }
-    // Ban / unban license
     else if ((action === 'ban_key' || action === 'unban_key') && license_key) {
       const banned = action === 'ban_key' ? 1 : 0;
       await pool.query("UPDATE licenses SET banned=? WHERE key_code=?", [banned, license_key]);
       msg = `License ${license_key} ${banned ? 'banned' : 'unbanned'}.`;
-    }
-    // Delete license
+    } 
     else if (action === 'delete_key' && license_key) {
       await pool.query("DELETE FROM licenses WHERE key_code=?", [license_key]);
       msg = `License ${license_key} deleted.`;
+    }
+
+    // ✅ NEW: Change password
+    else if (action === 'change_password' && user_id) {
+      if (!new_password) return res.status(400).json({ error: 'New password is required' });
+      const hashed = await bcrypt.hash(new_password, 10);
+      await pool.query("UPDATE users SET password_hash=? WHERE id=?", [hashed, user_id]);
+      msg = `Password for user ${user_id} updated successfully.`;
     }
 
     // Fetch users
