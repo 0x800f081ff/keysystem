@@ -18,6 +18,7 @@
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
       min-height: 100vh;
       padding: 20px;
+      line-height: 1.6;
     }
 
     .login-container {
@@ -46,12 +47,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
     }
 
     .header h1 {
       color: white;
       font-size: 28px;
       font-weight: 600;
+      line-height: 1.3;
     }
 
     .logout-btn {
@@ -63,11 +67,18 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
+      white-space: nowrap;
     }
 
     .logout-btn:hover {
       background: rgba(231, 76, 60, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .logout-btn:focus-visible {
+      outline: 2px solid rgba(231, 76, 60, 0.8);
+      outline-offset: 2px;
     }
 
     .section {
@@ -86,6 +97,7 @@
       margin-bottom: 20px;
       padding-bottom: 15px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      line-height: 1.4;
     }
 
     .form-grid {
@@ -103,10 +115,11 @@
     .form-group label {
       font-size: 13px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.8);
+      color: rgba(255, 255, 255, 0.9);
       margin-bottom: 8px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      line-height: 1.4;
     }
 
     .form-group input[type="text"],
@@ -119,11 +132,12 @@
       border-radius: 8px;
       font-size: 14px;
       color: white;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
+      line-height: 1.5;
     }
 
     .form-group input::placeholder {
-      color: rgba(255, 255, 255, 0.4);
+      color: rgba(255, 255, 255, 0.5);
     }
 
     .form-group input:focus {
@@ -132,17 +146,32 @@
       border-color: rgba(255, 255, 255, 0.4);
     }
 
+    .form-group input:focus-visible {
+      outline: 2px solid rgba(52, 152, 219, 0.6);
+      outline-offset: 2px;
+    }
+
     .btn {
-      padding: 12px 24px;
+      padding: 10px 20px;
       border: none;
       border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       white-space: nowrap;
+      line-height: 1.4;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.6);
+      outline-offset: 2px;
     }
 
     .btn-primary {
@@ -164,55 +193,47 @@
 
     .btn-success:hover {
       background: rgba(46, 204, 113, 0.4);
+      transform: translateY(-1px);
     }
 
     .btn-danger {
       background: rgba(231, 76, 60, 0.2);
       color: white;
       border: 1px solid rgba(231, 76, 60, 0.4);
-      padding: 8px 14px;
-      font-size: 12px;
     }
 
     .btn-danger:hover {
       background: rgba(231, 76, 60, 0.3);
+      transform: translateY(-1px);
     }
 
     .btn-warning {
       background: rgba(241, 196, 15, 0.2);
       color: white;
       border: 1px solid rgba(241, 196, 15, 0.4);
-      padding: 8px 14px;
-      font-size: 12px;
     }
 
     .btn-warning:hover {
       background: rgba(241, 196, 15, 0.3);
-    }
-
-    /* Ensure action buttons have same size */
-    .actions .btn {
-      min-width: 60px;
-      height: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      transform: translateY(-1px);
     }
 
     .table-container {
       overflow-x: auto;
       border-radius: 8px;
       background: rgba(0, 0, 0, 0.2);
+      -webkit-overflow-scrolling: touch;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      min-width: 800px;
     }
 
     th {
       background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.95);
       padding: 14px;
       text-align: left;
       font-size: 12px;
@@ -221,54 +242,79 @@
       letter-spacing: 0.5px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    th:hover {
+      background: rgba(255, 255, 255, 0.12);
     }
 
     td {
-      padding: 12px 14px;
-      color: rgba(255, 255, 255, 0.85);
-      font-size: 13px;
+      padding: 14px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 14px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       vertical-align: middle;
+      line-height: 1.5;
     }
 
     tr:hover {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .status-badge {
       display: inline-block;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 4px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       white-space: nowrap;
+      line-height: 1.3;
     }
 
     .status-active {
-      background: rgba(46, 204, 113, 0.2);
-      color: rgba(46, 204, 113, 1);
+      background: rgba(46, 204, 113, 0.25);
+      color: #2ecc71;
+      border: 1px solid rgba(46, 204, 113, 0.4);
     }
 
     .status-banned {
-      background: rgba(231, 76, 60, 0.2);
-      color: rgba(231, 76, 60, 1);
+      background: rgba(231, 76, 60, 0.25);
+      color: #e74c3c;
+      border: 1px solid rgba(231, 76, 60, 0.4);
     }
 
     .status-expired {
-      background: rgba(241, 196, 15, 0.2);
-      color: rgba(241, 196, 15, 1);
+      background: rgba(241, 196, 15, 0.25);
+      color: #f1c40f;
+      border: 1px solid rgba(241, 196, 15, 0.4);
+      font-weight: 700;
     }
 
     .status-admin {
-      background: rgba(155, 89, 182, 0.2);
-      color: rgba(155, 89, 182, 1);
+      background: rgba(155, 89, 182, 0.25);
+      color: #9b59b6;
+      border: 1px solid rgba(155, 89, 182, 0.4);
+    }
+
+    .status-lifetime {
+      background: rgba(52, 152, 219, 0.25);
+      color: #3498db;
+      border: 1px solid rgba(52, 152, 219, 0.4);
+      font-weight: 700;
+    }
+
+    .countdown {
+      color: #3498db;
+      font-weight: 600;
     }
 
     .actions {
       display: flex;
       gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .hidden {
@@ -286,27 +332,31 @@
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 12px;
-      padding: 20px;
+      padding: 24px;
       text-align: center;
-      transition: transform 0.3s;
+      transition: all 0.3s ease;
     }
 
     .stat-card:hover {
       transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.1);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
     .stat-value {
-      font-size: 32px;
+      font-size: 36px;
       font-weight: 700;
       color: white;
       margin-bottom: 8px;
+      line-height: 1.2;
     }
 
     .stat-label {
       font-size: 13px;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.7);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      line-height: 1.4;
     }
 
     .notification {
@@ -321,6 +371,7 @@
       z-index: 1000;
       animation: slideIn 0.3s ease;
       max-width: 300px;
+      line-height: 1.5;
     }
 
     .notification.error {
@@ -342,22 +393,18 @@
       background: rgba(0, 0, 0, 0.3);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 8px;
-      padding: 12px;
+      padding: 14px;
       margin-top: 15px;
       font-family: 'Courier New', monospace;
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.95);
       font-size: 14px;
       word-break: break-all;
+      line-height: 1.6;
     }
 
     .monospace {
       font-family: 'Courier New', monospace;
-      font-size: 12px;
-    }
-
-    .countdown {
-      color: rgba(52, 152, 219, 1);
-      font-weight: 600;
+      font-size: 13px;
     }
 
     /* Custom Modal */
@@ -374,6 +421,7 @@
       justify-content: center;
       z-index: 2000;
       animation: fadeIn 0.2s ease;
+      padding: 20px;
     }
 
     @keyframes fadeIn {
@@ -388,7 +436,7 @@
       border-radius: 16px;
       padding: 30px;
       max-width: 450px;
-      width: 90%;
+      width: 100%;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
       animation: scaleIn 0.2s ease;
     }
@@ -427,10 +475,11 @@
       color: white;
       font-size: 20px;
       font-weight: 600;
+      line-height: 1.3;
     }
 
     .modal-message {
-      color: rgba(255, 255, 255, 0.8);
+      color: rgba(255, 255, 255, 0.85);
       font-size: 14px;
       line-height: 1.6;
       margin-bottom: 25px;
@@ -440,6 +489,7 @@
       display: flex;
       gap: 12px;
       justify-content: flex-end;
+      flex-wrap: wrap;
     }
 
     .modal-btn {
@@ -449,9 +499,15 @@
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      line-height: 1.4;
+    }
+
+    .modal-btn:focus-visible {
+      outline: 2px solid rgba(255, 255, 255, 0.6);
+      outline-offset: 2px;
     }
 
     .modal-btn-cancel {
@@ -473,6 +529,113 @@
     .modal-btn-confirm:hover {
       background: rgba(231, 76, 60, 0.4);
     }
+
+    /* Accessibility: Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
+      .login-container {
+        margin: 50px auto;
+        padding: 30px 20px;
+      }
+
+      .header {
+        padding: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .logout-btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .section {
+        padding: 20px;
+      }
+
+      .section-title {
+        font-size: 18px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+
+      .stat-value {
+        font-size: 28px;
+      }
+
+      .stat-label {
+        font-size: 11px;
+      }
+
+      .table-container {
+        margin: 0 -20px;
+        border-radius: 0;
+      }
+
+      .actions {
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+      }
+
+      .actions .btn {
+        width: 100%;
+      }
+
+      .modal-box {
+        padding: 25px 20px;
+      }
+
+      .modal-buttons {
+        flex-direction: column-reverse;
+      }
+
+      .modal-btn {
+        width: 100%;
+      }
+
+      .notification {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      th, td {
+        padding: 10px 8px;
+        font-size: 12px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -480,7 +643,7 @@
   <div id="loginView" class="login-container">
     <div style="text-align: center; margin-bottom: 30px;">
       <h1 style="color: white; font-size: 28px; margin-bottom: 8px;">Admin Panel</h1>
-      <p style="color: rgba(255, 255, 255, 0.6); font-size: 14px;">Enter your admin token to continue</p>
+      <p style="color: rgba(255, 255, 255, 0.7); font-size: 14px;">Enter your admin token to continue</p>
     </div>
 
     <div class="form-group">
@@ -725,7 +888,7 @@
 
       const tbody = document.querySelector('#licensesTable tbody');
       tbody.innerHTML = licenses.map(l => {
-        const expiryDisplay = formatExpiry(l.expiry);
+        const expiryInfo = formatExpiry(l.expiry, l.expiry_raw);
         const banBtnClass = l.banned ? 'btn-success' : 'btn-warning';
         const banBtnText = l.banned ? 'Unban' : 'Ban';
         const banAction = l.banned ? 'unban_key' : 'ban_key';
@@ -735,8 +898,8 @@
             <td>${l.id}</td>
             <td class="monospace">${l.key_code}</td>
             <td>${l.uses} / ${l.allowed_uses}</td>
-            <td class="monospace" style="font-size: 11px;">${l.email || 'N/A'}</td>
-            <td id="expiry-${l.id}" class="countdown" data-expiry="${l.expiry_raw || ''}">${expiryDisplay}</td>
+            <td class="monospace" style="font-size: 12px;">${l.email || 'N/A'}</td>
+            <td id="expiry-${l.id}" data-expiry="${l.expiry_raw || ''}" class="${expiryInfo.className}">${expiryInfo.display}</td>
             <td>
               <span class="status-badge ${l.banned ? 'status-banned' : 'status-active'}">
                 ${l.banned ? 'Banned' : 'Active'}
@@ -778,7 +941,7 @@
             </td>
             <td>${formatDate(u.created_at)}</td>
             <td>${u.last_login_at ? formatDate(u.last_login_at) : 'Never'}</td>
-            <td class="monospace" style="font-size: 11px;">${u.last_login_ip || 'N/A'}</td>
+            <td class="monospace" style="font-size: 12px;">${u.last_login_ip || 'N/A'}</td>
             <td>
               <div class="actions">
                 <button class="btn ${banBtnClass}" onclick="adminAction('${banAction}','${u.id}')">${banBtnText}</button>
@@ -790,11 +953,17 @@
       }).join('');
     }
 
-    function formatExpiry(expiry) {
-      if (!expiry || expiry === 'Lifetime') return 'Lifetime';
-      if (expiry === 'Expired') return 'Expired';
-      if (expiry.startsWith('in ')) return expiry;
-      return expiry;
+    function formatExpiry(expiry, expiryRaw) {
+      if (!expiry || expiry === 'Lifetime') {
+        return { display: 'Lifetime', className: 'status-lifetime' };
+      }
+      if (expiry === 'Expired') {
+        return { display: 'Expired', className: 'status-expired' };
+      }
+      if (expiry.startsWith('in ') || expiry.startsWith('Expires in ')) {
+        return { display: expiry, className: 'countdown' };
+      }
+      return { display: expiry, className: '' };
     }
 
     function startCountdowns() {
@@ -810,12 +979,12 @@
           const diff = endTime - Date.now();
           if (diff <= 0) {
             td.textContent = 'Expired';
-            td.classList.remove('countdown');
-            td.classList.add('status-expired');
+            td.className = 'status-expired';
             clearInterval(countdownIntervals[id]);
             return;
           }
           td.textContent = formatTimeDiff(diff);
+          td.className = 'countdown';
         }, 1000);
       });
     }
