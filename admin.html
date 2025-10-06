@@ -9,9 +9,7 @@ body{font-family:Arial;margin:20px;}
 h2{margin-top:40px;}
 table{border-collapse:collapse;width:100%;margin-bottom:20px;}
 th,td{border:1px solid #ccc;padding:5px;text-align:left;}
-form{margin-bottom:20px;}
 input,button{padding:5px;margin:3px;}
-.success{color:green;}
 .hidden{display:none;}
 </style>
 </head>
@@ -83,16 +81,15 @@ async function adminAction(action, idOrKey=null) {
 }
 
 function renderTables(data) {
-  // Licenses
-  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>HWID Locked</th><th>Email</th><th>Expiry</th><th>Banned</th><th>User</th><th>Actions</th></tr>';
+  // Licenses table (no HWID column, expiry = Lifetime if N/A)
+  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>Email</th><th>Expiry</th><th>Banned</th><th>User</th><th>Actions</th></tr>';
   data.licenses.forEach(l=>{
     html += `<tr>
       <td>${l.id}</td>
       <td>${l.key_code}</td>
       <td>${l.uses}/${l.allowed_uses}</td>
-      <td>${l.hwid_locked ? 'Yes' : 'No'}</td>
       <td>${l.email || 'N/A'}</td>
-      <td>${l.expiry || 'N/A'}</td>
+      <td>${l.expiry === 'N/A' ? 'Lifetime' : l.expiry}</td>
       <td>${l.banned}</td>
       <td>${l.user ? l.user.username : 'N/A'}</td>
       <td>
