@@ -614,20 +614,12 @@
               <span class="detail-value">${lic.email}</span>
             </div>
             ` : ''}
-            <div class="detail-row">
-              <span class="detail-label">Uses:</span>
-              <span class="detail-value">${lic.uses} / ${lic.allowed_uses}</span>
-            </div>
             ${lic.expiry ? `
             <div class="detail-row">
               <span class="detail-label">Expires:</span>
               <span class="detail-value">${formatDate(lic.expiry)}</span>
             </div>
             ` : ''}
-            <div class="detail-row">
-              <span class="detail-label">HWID Locked:</span>
-              <span class="detail-value">${lic.hwid_locked ? 'Yes' : 'No'}</span>
-            </div>
           </div>
         `;
       }
@@ -672,10 +664,6 @@
               <span class="detail-label">Last Login:</span>
               <span class="detail-value">${formatDate(data.last_login_at)}</span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">IP Address:</span>
-              <span class="detail-value">${data.last_login_ip}</span>
-            </div>
         `;
         
         if (data.license) {
@@ -707,20 +695,12 @@
                 <span class="detail-value">${lic.email}</span>
               </div>
               ` : ''}
-              <div class="detail-row">
-                <span class="detail-label">Uses:</span>
-                <span class="detail-value">${lic.uses} / ${lic.allowed_uses}</span>
-              </div>
               ${lic.expiry ? `
               <div class="detail-row">
                 <span class="detail-label">Expires:</span>
                 <span class="detail-value">${formatDate(lic.expiry)}</span>
               </div>
               ` : ''}
-              <div class="detail-row">
-                <span class="detail-label">HWID Locked:</span>
-                <span class="detail-value">${lic.hwid_locked ? 'Yes' : 'No'}</span>
-              </div>
             </div>
           `;
         } else {
