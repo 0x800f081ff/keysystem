@@ -1,720 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
+<style>
+/* === Background animation === */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+  background: #111;
+  color: #fff;
+}
+.background-animation {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(270deg, #ff9a9e, #fad0c4, #a18cd1, #fbc2eb);
+  background-size: 800% 800%;
+  animation: gradientMove 20s ease infinite;
+  z-index: -1;
+}
+@keyframes gradientMove {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+/* === Container === */
+.container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
 
-    /* Animated Background */
-    .bg-animated {
-      position: fixed;
-      width: 100vw;
-      height: 100vh;
-      top: 0;
-      left: 0;
-      z-index: 0;
-      overflow: hidden;
-    }
+/* === Table styling === */
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(0,0,0,0.6);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.custom-table th, .custom-table td {
+  padding: 12px;
+  text-align: left;
+}
+.custom-table th {
+  background: rgba(255,255,255,0.1);
+}
+.custom-table tr:nth-child(even) {
+  background: rgba(255,255,255,0.05);
+}
 
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(60px);
-      opacity: 0.5;
-      animation: float 20s infinite ease-in-out;
-    }
+/* === Input styling === */
+.custom-input {
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: none;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  outline: none;
+  margin-right: 5px;
+}
 
-    .orb-1 {
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, #3b82f6, transparent);
-      top: -100px;
-      left: -100px;
-      animation-delay: 0s;
-    }
+/* === Button styling === */
+.btn-connect {
+  position: relative;
+  padding: 8px 20px;
+  background: #6a5af9;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.btn-connect::before {
+  content: "";
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.2);
+  transition: left 0.3s;
+}
+.btn-connect:hover::before {
+  left: 0;
+}
+.btn-connect:active {
+  transform: scale(0.97);
+  transition: transform 0.1s;
+}
 
-    .orb-2 {
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, #8b5cf6, transparent);
-      bottom: -150px;
-      right: -150px;
-      animation-delay: 5s;
-    }
-
-    .orb-3 {
-      width: 350px;
-      height: 350px;
-      background: radial-gradient(circle, #ec4899, transparent);
-      top: 50%;
-      left: 50%;
-      animation-delay: 10s;
-    }
-
-    @keyframes float {
-      0%, 100% {
-        transform: translate(0, 0) scale(1);
-      }
-      33% {
-        transform: translate(50px, -50px) scale(1.1);
-      }
-      66% {
-        transform: translate(-30px, 30px) scale(0.9);
-      }
-    }
-
-    /* Glass morphism cards */
-    .glass {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.1);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(139, 92, 246, 0.5);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(139, 92, 246, 0.8);
-    }
-
-    * {
-      scrollbar-width: thin;
-      scrollbar-color: rgba(139, 92, 246, 0.5) rgba(0, 0, 0, 0.1);
-    }
-
-    /* Remove number input spinners */
-    input[type="number"]::-webkit-inner-spin-button,
-    input[type="number"]::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
-    input[type="number"] {
-      -moz-appearance: textfield;
-    }
-
-    /* Button ripple effect */
-    .btn-ripple {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-ripple::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .btn-ripple:hover::before {
-      width: 400%;
-      height: 400%;
-    }
-
-    .btn-ripple > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Animations */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes slideIn {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    .fade-in {
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    .slide-in {
-      animation: slideIn 0.3s ease-out;
-    }
-
-    /* Status badges */
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .badge-active {
-      background: rgba(16, 185, 129, 0.2);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .badge-banned {
-      background: rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .badge-expired {
-      background: rgba(251, 191, 36, 0.2);
-      color: #fbbf24;
-      border: 1px solid rgba(251, 191, 36, 0.3);
-    }
-
-    .badge-lifetime {
-      background: rgba(59, 130, 246, 0.2);
-      color: #3b82f6;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-
-    .badge-admin {
-      background: rgba(139, 92, 246, 0.2);
-      color: #8b5cf6;
-      border: 1px solid rgba(139, 92, 246, 0.3);
-    }
-
-    /* Table hover effect */
-    tbody tr {
-      transition: all 0.2s ease;
-    }
-
-    tbody tr:hover {
-      background: rgba(255, 255, 255, 0.05);
-      transform: translateX(4px);
-    }
-
-    /* Input focus glow */
-    input:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
-    }
-  </style>
+/* === License update animation === */
+.license-count {
+  transition: all 0.5s;
+}
+.license-count.decreased {
+  color: #ff4d4d;
+  font-weight: bold;
+  transform: scale(1.2);
+}
+</style>
 </head>
 <body>
-  <div class="bg-animated">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-  </div>
 
-  <div class="relative z-10 min-h-screen p-4 md:p-8">
-    <!-- Login View -->
-    <div id="loginView" class="flex items-center justify-center min-h-screen">
-      <div class="glass rounded-2xl p-8 w-full max-w-md fade-in">
-        <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold text-white mb-2">Admin Panel</h1>
-          <p class="text-white/70 text-sm">Enter your admin token to continue</p>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-white/90 text-sm font-medium mb-2">Admin Token</label>
-            <input 
-              type="password" 
-              id="adminToken" 
-              placeholder="Enter your admin token"
-              class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 transition-all"
-              onkeypress="if(event.key==='Enter') connectAdmin()"
-            >
-          </div>
-          <button 
-            onclick="connectAdmin()" 
-            class="btn-ripple w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all"
-          >
-            <span>Connect</span>
-          </button>
-        </div>
-      </div>
-    </div>
+<div class="background-animation"></div>
 
-    <!-- Admin Dashboard -->
-    <div id="adminContent" class="hidden">
-      <!-- Header -->
-      <div class="glass rounded-2xl p-6 mb-6 flex justify-between items-center flex-wrap gap-4 fade-in">
-        <h1 class="text-3xl font-bold text-white">Admin Dashboard</h1>
-        <button 
-          onclick="logout()" 
-          class="btn-ripple px-6 py-2 bg-red-500/20 border border-red-500/40 text-white rounded-lg font-semibold hover:bg-red-500/30 transition-all"
-        >
-          <span>Logout</span>
-        </button>
-      </div>
+<div class="container">
+  <h1>Users</h1>
+  <table class="custom-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Email</th>
+        <th>Active Licenses</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="usersTableBody">
+      <tr data-user-id="1">
+        <td>John Doe</td>
+        <td>john@example.com</td>
+        <td class="license-count" data-count="3">3</td>
+        <td class="actions">
+          <input type="password" id="newPassword-1" placeholder="New password" class="custom-input">
+          <button class="btn-connect" onclick="adminAction('change_password', 1)">Change Password</button>
+        </td>
+      </tr>
+      <tr data-user-id="2">
+        <td>Jane Smith</td>
+        <td>jane@example.com</td>
+        <td class="license-count" data-count="2">2</td>
+        <td class="actions">
+          <input type="password" id="newPassword-2" placeholder="New password" class="custom-input">
+          <button class="btn-connect" onclick="adminAction('change_password', 2)">Change Password</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
-      <!-- Stats Grid -->
-      <div id="statsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6"></div>
+<script>
+/* === Fake backend data for demo === */
+let usersData = [
+  {id: 1, licenses: 3},
+  {id: 2, licenses: 2},
+];
 
-      <!-- Generate License Section -->
-      <div class="glass rounded-2xl p-6 mb-6 fade-in">
-        <h2 class="text-xl font-bold text-white mb-4 pb-4 border-b border-white/10">Generate New License</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-white/90 text-sm font-medium mb-2">Allowed Uses</label>
-            <input 
-              type="number" 
-              id="allowedUses" 
-              value="1" 
-              min="1"
-              class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white transition-all"
-            >
-          </div>
-          <div>
-            <label class="block text-white/90 text-sm font-medium mb-2">Validity (0 = Lifetime)</label>
-            <input 
-              type="text" 
-              id="timeValid" 
-              placeholder="10s / 10m / 10h / 10d / 10y"
-              class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 transition-all"
-            >
-          </div>
-        </div>
-        <button 
-          onclick="adminAction('generate')" 
-          class="btn-ripple px-6 py-2 bg-green-500/20 border border-green-500/40 text-white rounded-lg font-semibold hover:bg-green-500/30 transition-all"
-        >
-          <span>Generate License Key</span>
-        </button>
-        <div id="generatedKey"></div>
-      </div>
+/* === Admin action handler === */
+function adminAction(action, idOrKey) {
+  if(action === 'change_password' && idOrKey) {
+    const newPassword = document.getElementById(`newPassword-${idOrKey}`).value.trim();
+    if(!newPassword) return alert('Enter a new password');
+    // Simulate API call
+    alert(`Password for user ${idOrKey} changed to: ${newPassword}`);
+    document.getElementById(`newPassword-${idOrKey}`).value = '';
+  }
+}
 
-      <!-- Licenses Section -->
-      <div class="glass rounded-2xl p-6 mb-6 fade-in">
-        <h2 class="text-xl font-bold text-white mb-4 pb-4 border-b border-white/10">License Keys</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full" id="licensesTable">
-            <thead>
-              <tr class="border-b border-white/10">
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">ID</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">License Key</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Uses</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Email</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Expiry</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Status</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">User</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Users Section -->
-      <div class="glass rounded-2xl p-6 mb-6 fade-in">
-        <h2 class="text-xl font-bold text-white mb-4 pb-4 border-b border-white/10">Users</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full" id="usersTable">
-            <thead>
-              <tr class="border-b border-white/10">
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">ID</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Username</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Email</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Role</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Status</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Created</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Last Login</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">IP</th>
-                <th class="text-left py-3 px-4 text-white/80 text-xs font-semibold uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Notification Container -->
-  <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
-
-  <script>
-    const state = {
-      adminToken: '',
-      countdownIntervals: {},
-      data: null
-    };
-
-    // Utility Functions
-    function showNotification(message, isError = false) {
-      const container = document.getElementById('notificationContainer');
-      const notif = document.createElement('div');
-      notif.className = `glass rounded-lg p-4 text-white slide-in ${isError ? 'border-red-500/50' : 'border-green-500/50'} border`;
-      notif.style.maxWidth = '300px';
-      notif.textContent = message;
-      container.appendChild(notif);
-      
-      setTimeout(() => {
-        notif.style.animation = 'slideIn 0.3s ease-out reverse';
-        setTimeout(() => notif.remove(), 300);
-      }, 3000);
+/* === Active licenses updater === */
+function updateLicenses() {
+  usersData.forEach(user => {
+    const row = document.querySelector(`tr[data-user-id='${user.id}']`);
+    const licenseCell = row.querySelector('.license-count');
+    let current = parseInt(licenseCell.textContent);
+    if(current > 0) {
+      current--; // simulate license expiration
+      licenseCell.textContent = current;
+      licenseCell.classList.add('decreased');
+      setTimeout(() => licenseCell.classList.remove('decreased'), 800);
     }
+  });
+}
 
-    function showModal(title, message, onConfirm) {
-      const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
-      modal.style.background = 'rgba(0, 0, 0, 0.7)';
-      modal.style.backdropFilter = 'blur(8px)';
-      
-      modal.innerHTML = `
-        <div class="glass rounded-2xl p-6 max-w-md w-full fade-in">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center text-2xl">⚠️</div>
-            <h3 class="text-xl font-bold text-white">${title}</h3>
-          </div>
-          <p class="text-white/80 mb-6">${message}</p>
-          <div class="flex gap-3 justify-end">
-            <button onclick="this.closest('.fixed').remove()" class="btn-ripple px-6 py-2 bg-white/10 border border-white/20 text-white rounded-lg font-semibold hover:bg-white/20 transition-all">
-              <span>Cancel</span>
-            </button>
-            <button id="modalConfirm" class="btn-ripple px-6 py-2 bg-red-500/20 border border-red-500/40 text-white rounded-lg font-semibold hover:bg-red-500/30 transition-all">
-              <span>Delete</span>
-            </button>
-          </div>
-        </div>
-      `;
-      
-      document.body.appendChild(modal);
-      
-      document.getElementById('modalConfirm').onclick = () => {
-        onConfirm();
-        modal.remove();
-      };
-      
-      modal.onclick = (e) => {
-        if (e.target === modal) modal.remove();
-      };
-    }
+/* Update every 5 seconds for demo */
+setInterval(updateLicenses, 5000);
+</script>
 
-    // API Functions
-    async function connectAdmin() {
-      state.adminToken = document.getElementById('adminToken').value.trim();
-      if (!state.adminToken) {
-        showNotification('Please enter admin token', true);
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: state.adminToken, action: 'none' })
-        });
-        const data = await res.json();
-        
-        if (data.error) {
-          showNotification(data.error, true);
-          return;
-        }
-
-        document.getElementById('loginView').classList.add('hidden');
-        document.getElementById('adminContent').classList.remove('hidden');
-        renderDashboard(data);
-        showNotification('Successfully connected');
-      } catch (err) {
-        showNotification('Connection error: ' + err.message, true);
-      }
-    }
-
-    function logout() {
-      Object.values(state.countdownIntervals).forEach(clearInterval);
-      state.countdownIntervals = {};
-      state.adminToken = '';
-      state.data = null;
-      
-      document.getElementById('loginView').classList.remove('hidden');
-      document.getElementById('adminContent').classList.add('hidden');
-      document.getElementById('adminToken').value = '';
-    }
-
-    async function adminAction(action, idOrKey = null) {
-      const body = { token: state.adminToken, action };
-
-      if (action === 'generate') {
-        body.allowed_uses = parseInt(document.getElementById('allowedUses').value) || 1;
-        body.time_valid = document.getElementById('timeValid').value.trim();
-      } else if (action === 'change_password' && idOrKey) {
-        const newPassword = document.getElementById(`newPassword-${idOrKey}`).value.trim();
-        if (!newPassword) {
-          showNotification('Enter a new password', true);
-          return;
-        }
-        body.user_id = idOrKey;
-        body.new_password = newPassword;
-      } else if (action.includes('user')) {
-        body.user_id = idOrKey;
-      } else if (action.includes('key')) {
-        body.license_key = idOrKey;
-      }
-
-      try {
-        const res = await fetch('/api/admin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        
-        if (data.error) {
-          showNotification(data.error, true);
-          return;
-        }
-
-        if (data.msg) {
-          showNotification(data.msg);
-        }
-
-        if (action === 'generate' && data.license_key) {
-          document.getElementById('generatedKey').innerHTML = 
-            `<div class="mt-4 p-4 bg-black/20 border border-white/10 rounded-lg">
-              <p class="text-white/70 text-sm mb-2">Generated License Key:</p>
-              <p class="text-white font-mono text-lg">🔑 ${data.license_key}</p>
-            </div>`;
-        }
-
-        renderDashboard(data);
-      } catch (err) {
-        showNotification('Error: ' + err.message, true);
-      }
-    }
-
-    // Render Functions
-    function renderDashboard(data) {
-      state.data = data;
-      renderStats(data);
-      renderLicensesTable(data.licenses);
-      renderUsersTable(data.users);
-    }
-
-    function renderStats(data) {
-      const now = Date.now();
-      const totalLicenses = data.licenses.length;
-      const activeLicenses = data.licenses.filter(l => {
-        if (l.banned) return false;
-        if (!l.expiry_raw || l.expiry_raw === 'Lifetime') return true;
-        return new Date(l.expiry_raw).getTime() > now;
-      }).length;
-      const totalUsers = data.users.length;
-      const activeUsers = data.users.filter(u => !u.banned).length;
-
-      const stats = [
-        { label: 'Total Licenses', value: totalLicenses, color: 'from-blue-500 to-cyan-500' },
-        { label: 'Active Licenses', value: activeLicenses, color: 'from-green-500 to-emerald-500' },
-        { label: 'Total Users', value: totalUsers, color: 'from-purple-500 to-pink-500' },
-        { label: 'Active Users', value: activeUsers, color: 'from-orange-500 to-red-500' }
-      ];
-
-      document.getElementById('statsGrid').innerHTML = stats.map(stat => `
-        <div class="glass rounded-xl p-6 text-center hover:scale-105 transition-transform fade-in">
-          <div class="text-4xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-2">
-            ${stat.value}
-          </div>
-          <div class="text-white/70 text-sm uppercase tracking-wider">${stat.label}</div>
-        </div>
-      `).join('');
-    }
-
-    function renderLicensesTable(licenses) {
-      Object.values(state.countdownIntervals).forEach(clearInterval);
-      state.countdownIntervals = {};
-
-      const tbody = document.querySelector('#licensesTable tbody');
-      tbody.innerHTML = licenses.map(l => {
-        const expiryInfo = formatExpiry(l.expiry, l.expiry_raw);
-        const banBtnClass = l.banned ? 'bg-green-500/20 border-green-500/40 hover:bg-green-500/30' : 'bg-yellow-500/20 border-yellow-500/40 hover:bg-yellow-500/30';
-        const banBtnText = l.banned ? 'Unban' : 'Ban';
-        const banAction = l.banned ? 'unban_key' : 'ban_key';
-        
-        return `
-          <tr class="border-b border-white/5">
-            <td class="py-3 px-4 text-white/80">${l.id}</td>
-            <td class="py-3 px-4 text-white/80 font-mono text-sm">${l.key_code}</td>
-            <td class="py-3 px-4 text-white/80">${l.uses} / ${l.allowed_uses}</td>
-            <td class="py-3 px-4 text-white/80 text-sm">${l.email || 'N/A'}</td>
-            <td class="py-3 px-4" id="expiry-${l.id}" data-expiry="${l.expiry_raw || ''}">
-              ${expiryInfo.html}
-            </td>
-            <td class="py-3 px-4">
-              <span class="badge ${l.banned ? 'badge-banned' : 'badge-active'}">
-                ${l.banned ? 'Banned' : 'Active'}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-white/80">${l.user ? l.user.username : 'Unbound'}</td>
-            <td class="py-3 px-4">
-              <div class="flex gap-2 flex-wrap">
-                <button onclick="adminAction('${banAction}','${l.key_code}')" class="btn-ripple px-3 py-1 ${banBtnClass} border text-white text-sm rounded-lg transition-all">
-                  <span>${banBtnText}</span>
-                </button>
-                <button onclick="confirmDelete('key', '${l.key_code}')" class="btn-ripple px-3 py-1 bg-red-500/20 border border-red-500/40 text-white text-sm rounded-lg hover:bg-red-500/30 transition-all">
-                  <span>Delete</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      startCountdowns();
-    }
-
-    function renderUsersTable(users) {
-      const tbody = document.querySelector('#usersTable tbody');
-      tbody.innerHTML = users.map(u => {
-        const banBtnClass = u.banned ? 'bg-green-500/20 border-green-500/40 hover:bg-green-500/30' : 'bg-yellow-500/20 border-yellow-500/40 hover:bg-yellow-500/30';
-        const banBtnText = u.banned ? 'Unban' : 'Ban';
-        const banAction = u.banned ? 'unban_user' : 'ban_user';
-        
-        return `
-          <tr class="border-b border-white/5">
-            <td class="py-3 px-4 text-white/80">${u.id}</td>
-            <td class="py-3 px-4 text-white/80">${u.username}</td>
-            <td class="py-3 px-4 text-white/80">${u.email}</td>
-            <td class="py-3 px-4">
-              ${u.is_admin ? '<span class="badge badge-admin">Admin</span>' : '<span class="text-white/70">User</span>'}
-            </td>
-            <td class="py-3 px-4">
-              <span class="badge ${u.banned ? 'badge-banned' : 'badge-active'}">
-                ${u.banned ? 'Banned' : 'Active'}
-              </span>
-            </td>
-            <td class="py-3 px-4 text-white/80 text-sm">${formatDate(u.created_at)}</td>
-            <td class="py-3 px-4 text-white/80 text-sm">${u.last_login_at ? formatDate(u.last_login_at) : 'Never'}</td>
-            <td class="py-3 px-4 text-white/80 text-sm font-mono">${u.last_login_ip || 'N/A'}</td>
-            <td class="py-3 px-4">
-              <div class="flex gap-2 flex-wrap items-center">
-                <input type="password" id="newPassword-${u.id}" placeholder="New password" class="px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white text-sm placeholder-white/50 transition-all" style="min-width: 120px;">
-                <button onclick="adminAction('change_password', '${u.id}')" class="btn-ripple px-3 py-1 bg-blue-500/20 border border-blue-500/40 text-white text-sm rounded-lg hover:bg-blue-500/30 transition-all">
-                  <span>Change</span>
-                </button>
-                <button onclick="adminAction('${banAction}','${u.id}')" class="btn-ripple px-3 py-1 ${banBtnClass} border text-white text-sm rounded-lg transition-all">
-                  <span>${banBtnText}</span>
-                </button>
-                <button onclick="confirmDelete('user', '${u.id}')" class="btn-ripple px-3 py-1 bg-red-500/20 border border-red-500/40 text-white text-sm rounded-lg hover:bg-red-500/30 transition-all">
-                  <span>Delete</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // Helper Functions
-    function formatExpiry(expiry, expiryRaw) {
-      if (!expiry || expiry === 'Lifetime') {
-        return { html: '<span class="badge badge-lifetime">Lifetime</span>' };
-      }
-      if (expiry === 'Expired') {
-        return { html: '<span class="badge badge-expired">Expired</span>' };
-      }
-      return { html: `<span class="text-blue-400 font-semibold">${expiry}</span>` };
-    }
-
-    function startCountdowns() {
-      document.querySelectorAll('[id^="expiry-"]').forEach(td => {
-        const raw = td.dataset.expiry;
-        if (!raw || raw === 'Lifetime' || raw === 'Expired') return;
-
-        const endTime = new Date(raw).getTime();
-        if (isNaN(endTime)) return;
-
-        const id = td.id;
-        state.countdownIntervals[id] = setInterval(() => {
-          const diff = endTime - Date.now();
-          if (diff <= 0) {
-            td.innerHTML = '<span class="badge badge-expired">Expired</span>';
-            clearInterval(state.countdownIntervals[id]);
-            // Refresh stats when a license expires
-            adminAction('none');
-            return;
-          }
-          td.innerHTML = `<span class="text-blue-400 font-semibold">${formatTimeDiff(diff)}</span>`;
-        }, 1000);
-      });
-    }
-
-    function formatTimeDiff(ms) {
-      const totalSeconds = Math.floor(ms / 1000);
-      const days = Math.floor(totalSeconds / 86400);
-      const hours = Math.floor((totalSeconds % 86400) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
-      
-      const parts = [];
-      if (days > 0) parts.push(`${days}d`);
-      if (hours > 0) parts.push(`${hours}h`);
-      if (minutes > 0) parts.push(`${minutes}m`);
-      parts.push(`${seconds}s`);
-      
-      return 'Expires in ' + parts.join(' ');
-    }
-
-    function confirmDelete(type, id) {
-      const typeLabel = type === 'user' ? 'user' : 'license key';
-      showModal(
-        'Confirm Deletion',
-        `Are you sure you want to permanently delete this ${typeLabel}? This action cannot be undone.`,
-        () => adminAction(type === 'user' ? 'delete_user' : 'delete_key', id)
-      );
-    }
-
-    function formatDate(dateString) {
-      if (!dateString) return 'N/A';
-      const date = new Date(dateString);
-      return date.toLocaleString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-  </script>
 </body>
 </html>
