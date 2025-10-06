@@ -1,7 +1,7 @@
 import pool from '../../db.js';
 
 function formatDate(d) {
-  if (!d) return 'N/A';
+  if (!d) return 'Lifetime'; // if no expiry → Lifetime
   const date = new Date(d);
   return date.toLocaleString('en-GB', { hour12: false });
 }
@@ -10,7 +10,6 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { token, action, user_id, license_key, allowed_uses, days_valid } = req.body;
-
   if (token !== process.env.ADMIN_TOKEN) return res.status(403).json({ error: 'Unauthorized' });
 
   try {
@@ -19,7 +18,6 @@ export default async function handler(req, res) {
     if (action === 'generate') {
       const key = (Math.random().toString(36).substring(2, 17) + Math.random().toString(36).substring(2, 17)).toUpperCase();
       const expiry = days_valid > 0 ? new Date(Date.now() + days_valid * 24 * 60 * 60 * 1000) : null;
-
       await pool.query(
         "INSERT INTO licenses (key_code, allowed_uses, hwid_locked, expiry) VALUES (?,?,?,?)",
         [key, allowed_uses || 1, 1, expiry]
@@ -68,7 +66,11 @@ export default async function handler(req, res) {
         if (l.user_id) {
           const [u] = await pool.query("SELECT id,username,email FROM users WHERE id=?", [l.user_id]);
           l.user = u[0] || null;
-        } else l.user = null;
+          l.email = u[0]?.email || null; // show linked user email
+        } else {
+          l.user = null;
+          l.email = null;
+        }
         l.expiry = formatDate(l.expiry);
         return l;
       })
