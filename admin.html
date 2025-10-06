@@ -142,6 +142,7 @@
       transition: all 0.3s;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
     .btn-primary {
@@ -189,6 +190,15 @@
       background: rgba(241, 196, 15, 0.3);
     }
 
+    /* Ensure action buttons have same size */
+    .actions .btn {
+      min-width: 60px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .table-container {
       overflow-x: auto;
       border-radius: 8px;
@@ -218,6 +228,7 @@
       color: rgba(255, 255, 255, 0.85);
       font-size: 13px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
     }
 
     tr:hover {
@@ -231,6 +242,7 @@
       font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
     .status-active {
@@ -256,7 +268,6 @@
     .actions {
       display: flex;
       gap: 8px;
-      flex-wrap: wrap;
       align-items: center;
     }
 
@@ -409,6 +420,7 @@
       align-items: center;
       justify-content: center;
       font-size: 24px;
+      flex-shrink: 0;
     }
 
     .modal-title {
@@ -638,7 +650,8 @@
       let body = { token: adminToken, action };
 
       if(action === 'generate') {
-        body.allowed_uses = document.getElementById('allowedUses').value;
+        const allowedUsesValue = parseInt(document.getElementById('allowedUses').value) || 1;
+        body.allowed_uses = allowedUsesValue;
         body.time_valid = document.getElementById('timeValid').value.trim();
       } else if(action.includes('user')) {
         body.user_id = idOrKey;
@@ -713,6 +726,10 @@
       const tbody = document.querySelector('#licensesTable tbody');
       tbody.innerHTML = licenses.map(l => {
         const expiryDisplay = formatExpiry(l.expiry);
+        const banBtnClass = l.banned ? 'btn-success' : 'btn-warning';
+        const banBtnText = l.banned ? 'Unban' : 'Ban';
+        const banAction = l.banned ? 'unban_key' : 'ban_key';
+        
         return `
           <tr>
             <td>${l.id}</td>
@@ -728,13 +745,8 @@
             <td>${l.user ? l.user.username : 'Unbound'}</td>
             <td>
               <div class="actions">
-                <button class="btn ${l.banned ? 'btn-success' : 'btn-warning'}" 
-                        onclick="adminAction('${l.banned ? 'unban_key' : 'ban_key'}','${l.key_code}')">
-                  ${l.banned ? 'Unban' : 'Ban'}
-                </button>
-                <button class="btn btn-danger" onclick="confirmDelete('key', '${l.key_code}')">
-                  Delete
-                </button>
+                <button class="btn ${banBtnClass}" onclick="adminAction('${banAction}','${l.key_code}')">${banBtnText}</button>
+                <button class="btn btn-danger" onclick="confirmDelete('key', '${l.key_code}')">Delete</button>
               </div>
             </td>
           </tr>
@@ -746,35 +758,36 @@
 
     function renderUsersTable(users) {
       const tbody = document.querySelector('#usersTable tbody');
-      tbody.innerHTML = users.map(u => `
-        <tr>
-          <td>${u.id}</td>
-          <td>${u.username}</td>
-          <td>${u.email}</td>
-          <td>
-            ${u.is_admin ? '<span class="status-badge status-admin">Admin</span>' : 'User'}
-          </td>
-          <td>
-            <span class="status-badge ${u.banned ? 'status-banned' : 'status-active'}">
-              ${u.banned ? 'Banned' : 'Active'}
-            </span>
-          </td>
-          <td>${formatDate(u.created_at)}</td>
-          <td>${u.last_login_at ? formatDate(u.last_login_at) : 'Never'}</td>
-          <td class="monospace" style="font-size: 11px;">${u.last_login_ip || 'N/A'}</td>
-          <td>
-            <div class="actions">
-              <button class="btn ${u.banned ? 'btn-success' : 'btn-warning'}" 
-                      onclick="adminAction('${u.banned ? 'unban_user' : 'ban_user'}','${u.id}')">
-                ${u.banned ? 'Unban' : 'Ban'}
-              </button>
-              <button class="btn btn-danger" onclick="confirmDelete('user', '${u.id}')">
-                Delete
-              </button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = users.map(u => {
+        const banBtnClass = u.banned ? 'btn-success' : 'btn-warning';
+        const banBtnText = u.banned ? 'Unban' : 'Ban';
+        const banAction = u.banned ? 'unban_user' : 'ban_user';
+        
+        return `
+          <tr>
+            <td>${u.id}</td>
+            <td>${u.username}</td>
+            <td>${u.email}</td>
+            <td>
+              ${u.is_admin ? '<span class="status-badge status-admin">Admin</span>' : 'User'}
+            </td>
+            <td>
+              <span class="status-badge ${u.banned ? 'status-banned' : 'status-active'}">
+                ${u.banned ? 'Banned' : 'Active'}
+              </span>
+            </td>
+            <td>${formatDate(u.created_at)}</td>
+            <td>${u.last_login_at ? formatDate(u.last_login_at) : 'Never'}</td>
+            <td class="monospace" style="font-size: 11px;">${u.last_login_ip || 'N/A'}</td>
+            <td>
+              <div class="actions">
+                <button class="btn ${banBtnClass}" onclick="adminAction('${banAction}','${u.id}')">${banBtnText}</button>
+                <button class="btn btn-danger" onclick="confirmDelete('user', '${u.id}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function formatExpiry(expiry) {
