@@ -14,6 +14,12 @@ export default async function handler(req, res) {
   email = email?.trim();
   hwid = hwid?.trim(); // optional for website
 
+  // ✅ Check email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
   // ✅ Required fields for all registrations
   const missing = [];
   if (!username) missing.push('username');
@@ -65,7 +71,6 @@ export default async function handler(req, res) {
       updateData.splice(1, 0, hwid); // insert hwid after user_id
     }
     updateQuery += " WHERE id = ?";
-
     await pool.query(updateQuery, updateData);
 
     res.json({
