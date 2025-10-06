@@ -27,7 +27,7 @@ input,button{padding:5px;margin:3px;}
 <h2>Generate License</h2>
 <label>Allowed Uses: <input id="allowedUses" type="number" value="1"></label>
 <label>Days Valid (0=never expire): <input id="daysValid" type="number" value="0"></label>
-<label>HWID Locked: <input id="hwidLocked" type="checkbox"></label>
+<label>Email Locked: <input id="emailLocked" type="checkbox"></label>
 <button onclick="adminAction('generate')">Generate License</button>
 
 <h2>Existing Licenses</h2>
@@ -65,7 +65,7 @@ async function adminAction(action, idOrKey=null) {
   if(action === 'generate') {
     body.allowed_uses = document.getElementById('allowedUses').value;
     body.days_valid = document.getElementById('daysValid').value;
-    body.hwid_locked = document.getElementById('hwidLocked').checked ? 1 : 0;
+    body.email_locked = document.getElementById('emailLocked').checked ? 1 : 0;
   } else if(action.includes('user')) {
     body.user_id = idOrKey;
   } else if(action.includes('key')) {
@@ -86,14 +86,14 @@ async function adminAction(action, idOrKey=null) {
 
 function renderTables(data) {
   // Licenses
-  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>HWID Locked</th><th>HWID</th><th>Expiry</th><th>Banned</th><th>User ID</th><th>User</th><th>Actions</th></tr>';
+  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>Email Locked</th><th>Email</th><th>Expiry</th><th>Banned</th><th>User ID</th><th>User</th><th>Actions</th></tr>';
   data.licenses.forEach(l=>{
     html += `<tr>
       <td>${l.id}</td>
       <td>${l.key_code}</td>
       <td>${l.uses}/${l.allowed_uses}</td>
-      <td>${l.hwid_locked}</td>
-      <td>${l.hwid || 'N/A'}</td>
+      <td>${l.email_locked}</td>
+      <td>${l.email || 'N/A'}</td>
       <td>${l.expiry || 'N/A'}</td>
       <td>${l.banned}</td>
       <td>${l.user_id || 'N/A'}</td>
