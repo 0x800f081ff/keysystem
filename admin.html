@@ -5,19 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KeyAuth Admin Panel</title>
 <style>
-body{font-family:Arial;margin:20px;background:#f5f5f5;}
-h1,h2{color:#222;}
-table{border-collapse:collapse;width:100%;margin-bottom:20px;background:white;border-radius:8px;overflow:hidden;}
-th,td{border:1px solid #ddd;padding:8px;text-align:left;}
-th{background:#333;color:white;}
-input,button{padding:6px;margin:4px;border-radius:6px;border:1px solid #ccc;}
-button{cursor:pointer;background:#007bff;color:white;border:none;}
-button:hover{background:#0056b3;}
-.success{color:green;}
+body{font-family:Arial;margin:20px;background:#111;color:#eee;}
+h2{margin-top:40px;}
+table{border-collapse:collapse;width:100%;margin-bottom:20px;}
+th,td{border:1px solid #333;padding:5px;text-align:left;}
+input,button{padding:5px;margin:3px;background:#222;color:#fff;border:1px solid #444;border-radius:5px;}
+button:hover{background:#333;}
 .hidden{display:none;}
-.expiry-lifetime{color:green;font-weight:bold;}
-.expiry-expired{color:red;font-weight:bold;}
-.expiry-countdown{color:#ff9800;font-weight:bold;}
 </style>
 </head>
 <body>
@@ -31,7 +25,9 @@ button:hover{background:#0056b3;}
 
 <h2>Generate License</h2>
 <label>Allowed Uses: <input id="allowedUses" type="number" value="1"></label>
-<label>Time Valid (ex: 10s, 10m, 10h, 10d, 10y — 0 = lifetime): <input id="timeValid" type="text" value="0"></label>
+<label>Validity (0 = Lifetime): 
+  <input id="timeValid" type="text" placeholder="10s / 10m / 10h / 10d / 10y">
+</label>
 <button onclick="adminAction('generate')">Generate License</button>
 
 <h2>Existing Licenses</h2>
@@ -88,64 +84,21 @@ async function adminAction(action, idOrKey=null) {
   } catch(err) { alert(err); }
 }
 
-// Countdown updater
-function startCountdown(element, expiryDate) {
-  if (!expiryDate || expiryDate === 'Lifetime') {
-    element.textContent = 'Lifetime';
-    element.className = 'expiry-lifetime';
-    return;
-  }
-
-  const expiry = new Date(expiryDate).getTime();
-  if (isNaN(expiry)) {
-    element.textContent = expiryDate;
-    return;
-  }
-
-  const id = Math.random().toString(36).substring(2, 8);
-  countdownIntervals[id] = setInterval(() => {
-    const now = Date.now();
-    const diff = expiry - now;
-
-    if (diff <= 0) {
-      clearInterval(countdownIntervals[id]);
-      element.textContent = 'Expired';
-      element.className = 'expiry-expired';
-      return;
-    }
-
-    const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
-    const days = Math.floor((diff / (1000 * 60 * 60 * 24)) % 365);
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const mins = Math.floor((diff / (1000 * 60)) % 60);
-    const secs = Math.floor((diff / 1000) % 60);
-
-    let text = '';
-    if (years) text += `${years}y `;
-    if (days) text += `${days}d `;
-    if (hours) text += `${hours}h `;
-    if (mins) text += `${mins}m `;
-    text += `${secs}s`;
-    element.textContent = text.trim();
-    element.className = 'expiry-countdown';
-  }, 1000);
-}
-
 function renderTables(data) {
-  // clear old countdowns
+  // Clear old countdowns
   Object.values(countdownIntervals).forEach(clearInterval);
   countdownIntervals = {};
 
-  // === Licenses table ===
+  // ---- LICENSES ----
   let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>Email</th><th>Expiry</th><th>Banned</th><th>User</th><th>Actions</th></tr>';
-  data.licenses.forEach((l,i)=>{
-    const expiryId = `expiry-${i}`;
+  data.licenses.forEach(l=>{
+    const expiryDisplay = formatExpiry(l.expiry);
     html += `<tr>
       <td>${l.id}</td>
       <td>${l.key_code}</td>
       <td>${l.uses}/${l.allowed_uses}</td>
       <td>${l.email || 'N/A'}</td>
-      <td id="${expiryId}">${l.expiry || 'Lifetime'}</td>
+      <td id="expiry-${l.id}" data-expiry="${l.expiry_raw || ''}">${expiryDisplay}</td>
       <td>${l.banned}</td>
       <td>${l.user ? l.user.username : 'N/A'}</td>
       <td>
@@ -157,13 +110,7 @@ function renderTables(data) {
   html += '</table>';
   document.getElementById('licensesTable').innerHTML = html;
 
-  // start countdown for each expiry
-  data.licenses.forEach((l,i)=>{
-    const el = document.getElementById(`expiry-${i}`);
-    if (el) startCountdown(el, l.expiry);
-  });
-
-  // === Users table ===
+  // ---- USERS ----
   html = '<table><tr><th>ID</th><th>Username</th><th>Email</th><th>Admin</th><th>Banned</th><th>Created</th><th>Last Login</th><th>IP</th><th>Actions</th></tr>';
   data.users.forEach(u=>{
     html += `<tr>
@@ -183,6 +130,54 @@ function renderTables(data) {
   });
   html += '</table>';
   document.getElementById('usersTable').innerHTML = html;
+
+  // Start live countdown for all expiries
+  startCountdowns();
+}
+
+function formatExpiry(expiry) {
+  if (!expiry || expiry === 'Lifetime') return 'Lifetime';
+  if (expiry === 'Expired') return 'Expired';
+  if (expiry.startsWith('in ')) return expiry;
+  return expiry; // fallback
+}
+
+// Start all live countdowns
+function startCountdowns() {
+  const now = Date.now();
+  document.querySelectorAll('[id^="expiry-"]').forEach(td => {
+    const raw = td.dataset.expiry;
+    if (!raw || raw === 'Lifetime' || raw === 'Expired') return;
+
+    const endTime = new Date(raw).getTime();
+    if (isNaN(endTime)) return;
+
+    const id = td.id;
+    countdownIntervals[id] = setInterval(() => {
+      const diff = endTime - Date.now();
+      if (diff <= 0) {
+        td.textContent = 'Expired';
+        clearInterval(countdownIntervals[id]);
+        return;
+      }
+      td.textContent = formatTimeDiff(diff);
+    }, 1000);
+  });
+}
+
+// Format milliseconds to 2d 4h 15m 32s
+function formatTimeDiff(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  let parts = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0) parts.push(`${minutes}m`);
+  parts.push(`${seconds}s`);
+  return 'Expires in ' + parts.join(' ');
 }
 </script>
 </body>
