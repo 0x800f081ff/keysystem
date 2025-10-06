@@ -1,139 +1,129 @@
-<script>
-let adminToken = '';
-let countdownIntervals = {};
+import pool from '../../db.js';
 
-async function connectAdmin() {
-  adminToken = document.getElementById('adminToken').value.trim();
-  if(!adminToken) return alert('Enter admin token');
-  try {
-    const res = await fetch('/api/admin', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ token: adminToken, action: 'none' })
-    });
-    const data = await res.json();
-    if(data.error) return alert(data.error);
-    document.getElementById('adminContent').classList.remove('hidden');
-    renderTables(data);
-  } catch(err) {
-    alert(err);
-  }
+function formatDate(d) {
+  if (!d) return 'Lifetime';
+  const date = new Date(d);
+  if (isNaN(date)) return 'Lifetime';
+  return date.toISOString(); // keep ISO for countdown calculations
 }
 
-async function adminAction(action, idOrKey=null) {
-  let body = { token: adminToken, action };
+// Converts strings like 10s / 10m / 10h / 10d / 10y to milliseconds
+function parseTimeDuration(str) {
+  if (!str || str === '0') return null; // Lifetime
+  const match = str.match(/(\d+)([smhdy])/i);
+  if (!match) return null;
 
-  if(action === 'generate') {
-    body.allowed_uses = document.getElementById('allowedUses').value;
-    body.time_valid = document.getElementById('timeValid').value.trim();
-  } else if(action.includes('user')) {
-    body.user_id = idOrKey;
-  } else if(action.includes('key')) {
-    body.license_key = idOrKey;
-  }
+  const num = parseInt(match[1]);
+  const unit = match[2].toLowerCase();
 
-  try {
-    const res = await fetch('/api/admin', {
-      method:'POST', 
-      headers:{'Content-Type':'application/json'}, 
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if(data.msg) alert(data.msg);
-    renderTables(data);
-  } catch(err) { alert(err); }
+  const multipliers = {
+    s: 1000,
+    m: 1000 * 60,
+    h: 1000 * 60 * 60,
+    d: 1000 * 60 * 60 * 24,
+    y: 1000 * 60 * 60 * 24 * 365,
+  };
+
+  return num * multipliers[unit];
 }
 
-// ✅ Utility to start live expiry countdowns
-function startCountdown(element, expiryText) {
-  if (!expiryText || expiryText === 'Lifetime' || expiryText === 'Expired') {
-    element.textContent = expiryText;
-    return;
-  }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') 
+    return res.status(405).json({ error: 'Method not allowed' });
 
-  // Try to parse the original expiry (we’ll assume backend sends “in X days/hours”)
-  const match = expiryText.match(/^in (\d+)/);
-  if (!match) return (element.textContent = expiryText);
+  const { token, action, user_id, license_key, allowed_uses, time_valid } = req.body;
 
-  // Convert relative text to a fake expiry date
-  const now = Date.now();
-  let expiry = now;
-  if (expiryText.includes('day')) expiry += parseInt(match[1]) * 86400000;
-  else if (expiryText.includes('hour')) expiry += parseInt(match[1]) * 3600000;
-  else if (expiryText.includes('min')) expiry += parseInt(match[1]) * 60000;
-  else expiry += 10000; // soon fallback
+  if (token !== process.env.ADMIN_TOKEN)
+    return res.status(403).json({ error: 'Unauthorized' });
 
-  // Update countdown every second
-  const id = Math.random().toString(36).substring(2, 8);
-  countdownIntervals[id] = setInterval(() => {
-    const diff = expiry - Date.now();
-    if (diff <= 0) {
-      clearInterval(countdownIntervals[id]);
-      element.textContent = 'Expired';
-      return;
+  try {
+    let msg = '';
+
+    // ✅ Generate new license
+    if (action === 'generate') {
+      const key = (Math.random().toString(36).substring(2, 17) + Math.random().toString(36).substring(2, 17)).toUpperCase();
+      const durationMs = parseTimeDuration(time_valid);
+      const expiry = durationMs ? new Date(Date.now() + durationMs) : null;
+
+      await pool.query(
+        "INSERT INTO licenses (key_code, allowed_uses, hwid_locked, expiry) VALUES (?, ?, ?, ?)",
+        [key, allowed_uses || 1, 1, expiry] // hwid_locked always on
+      );
+
+      msg = `License generated: ${key}`;
     }
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    const mins = Math.floor((diff % 3600000) / 60000);
-    const secs = Math.floor((diff % 60000) / 1000);
 
-    let text = '';
-    if (days > 0) text += `${days}d `;
-    if (hours > 0 || days > 0) text += `${hours}h `;
-    if (mins > 0 || hours > 0 || days > 0) text += `${mins}m `;
-    text += `${secs}s`;
-    element.textContent = text.trim();
-  }, 1000);
+    // ✅ Ban / unban user + linked licenses
+    else if (action === 'ban_user' && user_id) {
+      await pool.query("UPDATE users SET banned=1 WHERE id=?", [user_id]);
+      await pool.query("UPDATE licenses SET banned=1 WHERE user_id=?", [user_id]);
+      msg = `User ${user_id} banned and linked licenses also banned.`;
+    } 
+    else if (action === 'unban_user' && user_id) {
+      await pool.query("UPDATE users SET banned=0 WHERE id=?", [user_id]);
+      await pool.query("UPDATE licenses SET banned=0 WHERE user_id=?", [user_id]);
+      msg = `User ${user_id} unbanned and linked licenses also unbanned.`;
+    }
+
+    // ✅ Delete user + linked licenses
+    else if (action === 'delete_user' && user_id) {
+      await pool.query("DELETE FROM licenses WHERE user_id=?", [user_id]);
+      await pool.query("DELETE FROM users WHERE id=?", [user_id]);
+      msg = `User ${user_id} and all linked licenses deleted.`;
+    }
+
+    // ✅ Ban / unban license
+    else if ((action === 'ban_key' || action === 'unban_key') && license_key) {
+      const banned = action === 'ban_key' ? 1 : 0;
+      await pool.query("UPDATE licenses SET banned=? WHERE key_code=?", [banned, license_key]);
+      msg = `License ${license_key} ${banned ? 'banned' : 'unbanned'}.`;
+    }
+
+    // ✅ Delete license
+    else if (action === 'delete_key' && license_key) {
+      await pool.query("DELETE FROM licenses WHERE key_code=?", [license_key]);
+      msg = `License ${license_key} deleted.`;
+    }
+
+    // ✅ Fetch updated users + licenses
+    const [usersRaw] = await pool.query(
+      "SELECT id,username,email,is_admin,banned,created_at,last_login_at,last_login_ip FROM users ORDER BY id DESC"
+    );
+
+    const [licensesRaw] = await pool.query("SELECT * FROM licenses ORDER BY id DESC");
+
+    const users = usersRaw.map(u => ({
+      ...u,
+      created_at: new Date(u.created_at).toLocaleString('en-GB', { hour12: false }),
+      last_login_at: u.last_login_at ? new Date(u.last_login_at).toLocaleString('en-GB', { hour12: false }) : null
+    }));
+
+    const licenses = await Promise.all(
+      licensesRaw.map(async l => {
+        if (l.user_id) {
+          const [u] = await pool.query("SELECT id,username,email FROM users WHERE id=?", [l.user_id]);
+          l.user = u[0] || null;
+        } else l.user = null;
+
+        let expiryDisplay = 'Lifetime';
+        if (l.expiry) {
+          const exp = new Date(l.expiry);
+          if (exp < new Date()) expiryDisplay = 'Expired';
+          else expiryDisplay = exp.toISOString();
+        }
+
+        l.expiry_raw = l.expiry ? new Date(l.expiry).toISOString() : 'Lifetime';
+        l.expiry = expiryDisplay;
+        l.email = l.hwid || null; // show linked HWID/email if needed
+        delete l.hwid;
+
+        return l;
+      })
+    );
+
+    res.json({ msg, users, licenses });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
 }
-
-function renderTables(data) {
-  // Clear previous countdowns
-  Object.values(countdownIntervals).forEach(clearInterval);
-  countdownIntervals = {};
-
-  let html = '<table><tr><th>ID</th><th>Key</th><th>Uses/Allowed</th><th>Email</th><th>Expiry</th><th>Banned</th><th>User</th><th>Actions</th></tr>';
-  data.licenses.forEach((l, i)=>{
-    html += `<tr>
-      <td>${l.id}</td>
-      <td>${l.key_code}</td>
-      <td>${l.uses}/${l.allowed_uses}</td>
-      <td>${l.email || 'N/A'}</td>
-      <td id="expiry-${i}">${l.expiry}</td>
-      <td>${l.banned}</td>
-      <td>${l.user ? l.user.username : 'N/A'}</td>
-      <td>
-        <button onclick="adminAction('${l.banned? 'unban_key':'ban_key'}','${l.key_code}')">${l.banned? 'Unban':'Ban'}</button>
-        <button onclick="adminAction('delete_key','${l.key_code}')">Delete</button>
-      </td>
-    </tr>`;
-  });
-  html += '</table>';
-  document.getElementById('licensesTable').innerHTML = html;
-
-  // Start countdown timers
-  data.licenses.forEach((l, i)=>{
-    const el = document.getElementById(`expiry-${i}`);
-    if (el) startCountdown(el, l.expiry);
-  });
-
-  html = '<table><tr><th>ID</th><th>Username</th><th>Email</th><th>Admin</th><th>Banned</th><th>Created</th><th>Last Login</th><th>IP</th><th>Actions</th></tr>';
-  data.users.forEach(u=>{
-    html += `<tr>
-      <td>${u.id}</td>
-      <td>${u.username}</td>
-      <td>${u.email}</td>
-      <td>${u.is_admin}</td>
-      <td>${u.banned}</td>
-      <td>${u.created_at}</td>
-      <td>${u.last_login_at || 'N/A'}</td>
-      <td>${u.last_login_ip || 'N/A'}</td>
-      <td>
-        <button onclick="adminAction('${u.banned? 'unban_user':'ban_user'}','${u.id}')">${u.banned? 'Unban':'Ban'}</button>
-        <button onclick="adminAction('delete_user','${u.id}')">Delete</button>
-      </td>
-    </tr>`;
-  });
-  html += '</table>';
-  document.getElementById('usersTable').innerHTML = html;
-}
-</script>
