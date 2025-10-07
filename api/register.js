@@ -14,12 +14,6 @@ export default async function handler(req, res) {
   email = email?.trim();
   hwid = hwid?.trim(); // optional for website
 
-  // ✅ Check email format
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ error: 'Invalid email format' });
-  }
-
   // ✅ Required fields for all registrations
   const missing = [];
   if (!username) missing.push('username');
@@ -31,6 +25,12 @@ export default async function handler(req, res) {
     return res.status(400).json({
       error: `Missing field${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}`
     });
+  }
+
+  // ✅ Check email format (only if provided)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email && !emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
   }
 
   const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
